@@ -1,0 +1,18 @@
+{
+  "name": "support-ai-platform",
+  "private": true,
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "postinstall": "pnpm db:generate",
+    "db:generate": "pnpm --filter @repo/database db:generate",
+    "db:migrate": "pnpm --filter @repo/database db:migrate",
+    "db:studio": "pnpm --filter @repo/database db:studio"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3"
+  }
+}
