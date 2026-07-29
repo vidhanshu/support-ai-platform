@@ -14,6 +14,7 @@
     "allowSyntheticDefaultImports": true,
     "incremental": true,
     "strictNullChecks": true,
+    "strictPropertyInitialization": false,
     "noImplicitAny": true,
     "strictBindCallApply": true,
     "noFallthroughCasesInSwitch": true
