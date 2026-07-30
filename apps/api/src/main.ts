@@ -5,6 +5,8 @@ import { ConfigService } from "@nestjs/config";
 import { getRootEnvPath } from "@repo/config";
 import { AppModule } from "./app.module";
 import { ValidationPipe, VersioningType } from "@nestjs/common";
+import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
+import { ResponseInterceptor } from "./common/interceptors/response.interceptor";
 
 loadEnv({ path: getRootEnvPath() });
 
@@ -25,6 +27,9 @@ async function bootstrap(): Promise<void> {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
     }),
   );
 
@@ -34,6 +39,15 @@ async function bootstrap(): Promise<void> {
     defaultVersion: "1", // Sets 'v1' as the default prefix for all routes
   });
 
+  // global exception filter
+  app.useGlobalFilters(new HttpExceptionFilter());
+
+  // interceptor
+  app.useGlobalInterceptors(new ResponseInterceptor());
+
+  // logger
+  app.useLogger(["log", "error", "warn", "debug", "verbose"]);
+  
   await app.listen(port);
   console.log(`API listening on http://localhost:${port}`);
 }
