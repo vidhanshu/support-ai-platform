@@ -29,7 +29,8 @@ model User {
   updatedAt    DateTime @updatedAt
 
   memberships   WorkspaceMember[]
-  refreshTokens RefreshToken[]    @relation("UserRefreshTokens")
+  refreshTokens RefreshToken[]        @relation("UserRefreshTokens")
+  invitations   WorkspaceInvitation[]
   agents        Agent[]
 
   @@index([email])
@@ -60,6 +61,7 @@ model Workspace {
   agents        Agent[]
   documents     Document[]
   conversations Conversation[]
+  invitations   WorkspaceInvitation[]
 
   @@index([slug])
 }
@@ -80,6 +82,28 @@ model WorkspaceMember {
   @@index([userId])
 }
 
+model WorkspaceInvitation {
+  id    String        @id @default(uuid())
+  email String
+  role  WorkspaceRole
+  token String        @unique
+
+  expiresAt  DateTime
+  acceptedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  invitedById String
+  invitedBy   User   @relation(fields: [invitedById], references: [id], onDelete: Cascade)
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@index([workspaceId])
+  @@index([email])
+}
+
 model Agent {
   id           String   @id @default(uuid())
   workspaceId  String
@@ -89,8 +113,8 @@ model Agent {
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-  model        String? @default("gpt-4.1-mini")
-  temperature  Float? @default(0.2)
+  model        String?  @default("gpt-4.1-mini")
+  temperature  Float?   @default(0.2)
   createdBy    User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
   createdById  String
 

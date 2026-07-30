@@ -44,3 +44,7 @@ export const BCRYPT_CONFIGS = {
 export const HEADERS_KEYS = {
   WORKSPACE_ID: "x-workspace-id",
 } as const;
+
+export const INVITATION_CONFIGS = {
+  EXPIRATION_DAYS: 3,
+} as const;
