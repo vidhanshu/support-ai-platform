@@ -40,6 +40,7 @@ model RefreshToken {
   userId     String
   tokenHash  String
   expiresAt  DateTime
+  jti        String   @unique // token identifier for O(1) retrieval, we hash this in the refresh token
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt

@@ -3,6 +3,11 @@ export interface JwtPayload {
   email: string;
 }
 
-export interface JwtUser extends JwtPayload {
+export interface JwtRefreshPayload extends JwtPayload {
+  jti: string;
+}
+
+export interface JwtUser {
+  id: string;
   email: string;
 }

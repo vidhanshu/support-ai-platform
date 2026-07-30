@@ -33,7 +33,7 @@ export const ENV_KEYS = {
 } as const;
 
 export const JWT_CONFIGS = {
-  ACCESS_TOKEN_MINS: 15,
+  ACCESS_TOKEN_MINS: 1,
   REFRESH_TOKEN_DAYS: 30,
 } as const;
 
