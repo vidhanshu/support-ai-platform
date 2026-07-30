@@ -14,6 +14,10 @@ import { CreateWorkspaceDto } from "./dtos/create-workspace.dto";
 import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import type { JwtUser } from "../auth/interfaces/jwt.interface";
 import { UpdateWorkspaceDto } from "./dtos/update-workspace.dto";
+import { WorkspaceRolesGuard } from "../common/guards/workspace-roles.guards";
+import { WorkspaceRoles } from "../common/decorators/workspace-roles.decorate";
+import { WorkspaceRole } from "@repo/database";
+import { WorkspaceGuard } from "./guards/workspace.guard";
 
 @Controller("workspaces")
 export class WorkspaceController {
@@ -21,15 +25,13 @@ export class WorkspaceController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  async create(
-    @CurrentUser() user: JwtUser,
-    @Body() dto: CreateWorkspaceDto,
-  ) {
+  async create(@CurrentUser() user: JwtUser, @Body() dto: CreateWorkspaceDto) {
     return this.workspaceService.create(user, dto);
   }
 
   @Patch(":id")
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, WorkspaceGuard, WorkspaceRolesGuard)
+  @WorkspaceRoles(WorkspaceRole.OWNER)
   async update(
     @Body() dto: UpdateWorkspaceDto,
     @CurrentUser() user: JwtUser,
@@ -49,7 +51,7 @@ export class WorkspaceController {
   async findById(@CurrentUser() user: JwtUser, @Param("id") id: string) {
     return this.workspaceService.findById(user, id);
   }
-  
+
   @Delete(":id")
   @UseGuards(JwtAuthGuard)
   async deleteById(@CurrentUser() user: JwtUser, @Param("id") id: string) {
