@@ -21,38 +21,38 @@ export class WorkspaceController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  async createWorkspace(
+  async create(
     @CurrentUser() user: JwtUser,
     @Body() dto: CreateWorkspaceDto,
   ) {
-    return this.workspaceService.createWorkspace(user, dto);
+    return this.workspaceService.create(user, dto);
   }
 
   @Patch(":id")
   @UseGuards(JwtAuthGuard)
-  async updateWorkspace(
+  async update(
     @Body() dto: UpdateWorkspaceDto,
     @CurrentUser() user: JwtUser,
     @Param("id") id: string,
   ) {
-    return this.workspaceService.updateWorkspace(user, dto, id);
+    return this.workspaceService.update(user, dto, id);
   }
 
   @Get()
   @UseGuards(JwtAuthGuard)
-  async workspaces(@CurrentUser() user: JwtUser) {
-    return this.workspaceService.workspaces(user);
+  async findAll(@CurrentUser() user: JwtUser) {
+    return this.workspaceService.findAll(user);
   }
 
   @Get(":id")
   @UseGuards(JwtAuthGuard)
-  async workspaceById(@CurrentUser() user: JwtUser, @Param("id") id: string) {
-    return this.workspaceService.workspaceById(user, id);
+  async findById(@CurrentUser() user: JwtUser, @Param("id") id: string) {
+    return this.workspaceService.findById(user, id);
   }
   
   @Delete(":id")
   @UseGuards(JwtAuthGuard)
-  async deleteWorkspace(@CurrentUser() user: JwtUser, @Param("id") id: string) {
-    return this.workspaceService.deleteWorkspace(user, id);
+  async deleteById(@CurrentUser() user: JwtUser, @Param("id") id: string) {
+    return this.workspaceService.deleteById(user, id);
   }
 }

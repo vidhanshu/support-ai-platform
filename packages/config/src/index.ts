@@ -40,3 +40,7 @@ export const JWT_CONFIGS = {
 export const BCRYPT_CONFIGS = {
   SALT_ROUND: 12,
 } as const;
+
+export const HEADERS_KEYS = {
+  WORKSPACE_ID: "x-workspace-id",
+} as const;

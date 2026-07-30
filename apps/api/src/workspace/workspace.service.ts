@@ -32,7 +32,7 @@ export class WorkspaceService {
     return workspace;
   }
 
-  async createWorkspace(user: JwtUser, dto: CreateWorkspaceDto) {
+  async create(user: JwtUser, dto: CreateWorkspaceDto) {
     const { name } = dto;
     try {
       const workspace = await this.prismaService.workspace.create({
@@ -60,7 +60,7 @@ export class WorkspaceService {
     }
   }
 
-  async updateWorkspace(user: JwtUser, dto: UpdateWorkspaceDto, id: string) {
+  async update(user: JwtUser, dto: UpdateWorkspaceDto, id: string) {
     await this.checkWorkspaceExistenceAndOwnership(user, id);
 
     return this.prismaService.workspace.update({
@@ -69,7 +69,7 @@ export class WorkspaceService {
     });
   }
 
-  async workspaceById(user: JwtUser, id: string) {
+  async findById(user: JwtUser, id: string) {
     const workspace = await this.prismaService.workspace.findFirst({
       where: { id, members: { some: { userId: user.id } } },
       include: {
@@ -84,13 +84,13 @@ export class WorkspaceService {
     return workspace;
   }
 
-  async workspaces(user: JwtUser) {
+  async findAll(user: JwtUser) {
     return this.prismaService.workspace.findMany({
       where: { members: { some: { userId: user.id } } },
     });
   }
 
-  async deleteWorkspace(user: JwtUser, id: string) {
+  async deleteById(user: JwtUser, id: string) {
     await this.checkWorkspaceExistenceAndOwnership(user, id);
     await this.prismaService.workspace.delete({ where: { id } });
   }
