@@ -5,6 +5,7 @@ import { getRootEnvPath } from "@repo/config";
 import { HealthModule } from "./modules/health/health.module";
 import { AuthModule } from './auth/auth.module';
 import { WorkspaceModule } from './workspace/workspace.module';
+import { AgentsModule } from './agents/agents.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { WorkspaceModule } from './workspace/workspace.module';
     HealthModule,
     AuthModule,
     WorkspaceModule,
+    AgentsModule,
   ],
 })
 export class AppModule {}

@@ -28,22 +28,23 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  memberships WorkspaceMember[]
-  refreshTokens RefreshToken[] @relation("UserRefreshTokens")
+  memberships   WorkspaceMember[]
+  refreshTokens RefreshToken[]    @relation("UserRefreshTokens")
+  agents        Agent[]
 
   @@index([email])
 }
 
 model RefreshToken {
-  id         String   @id @default(uuid())
+  id String @id @default(uuid())
 
-  userId     String
-  tokenHash  String
-  expiresAt  DateTime
-  jti        String   @unique // token identifier for O(1) retrieval, we hash this in the refresh token
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  jti       String   @unique // token identifier for O(1) retrieval, we hash this in the refresh token
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user User @relation("UserRefreshTokens", fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -80,14 +81,18 @@ model WorkspaceMember {
 }
 
 model Agent {
-  id          String   @id @default(uuid())
-  workspaceId String
-  name        String
-  description String?
+  id           String   @id @default(uuid())
+  workspaceId  String
+  name         String
+  description  String?
   systemPrompt String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  model        String? @default("gpt-4.1-mini")
+  temperature  Float? @default(0.2)
+  createdBy    User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdById  String
 
   workspace     Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   documents     AgentDocument[]
