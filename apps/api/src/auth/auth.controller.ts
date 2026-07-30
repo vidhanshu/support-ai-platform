@@ -1,11 +1,11 @@
 import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
 import { AuthService } from "./auth.service";
-import { CreateUserDto } from "./dto/create-user.dto";
+import { CreateUserDto } from "./dtos/create-user.dto";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { CurrentUser } from "./decorators/current-user.decorator";
 import type { JwtUser } from "./interfaces/jwt.interface";
-import { LoginDto } from "./dto/login.dto";
-import { RefreshDto } from "./dto/refresh.dto";
+import { LoginDto } from "./dtos/login.dto";
+import { RefreshDto } from "./dtos/refresh.dto";
 
 @Controller("auth")
 export class AuthController {

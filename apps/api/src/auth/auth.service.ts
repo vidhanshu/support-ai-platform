@@ -3,15 +3,15 @@ import {
   Injectable,
   UnauthorizedException,
 } from "@nestjs/common";
-import { CreateUserDto } from "./dto/create-user.dto";
+import { CreateUserDto } from "./dtos/create-user.dto";
 import { Prisma, PrismaService, type User } from "@repo/database";
 import bcrypt from "bcrypt";
 import { JsonWebTokenError, JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import dayjs from "dayjs";
 import { BCRYPT_CONFIGS, ENV_KEYS, JWT_CONFIGS } from "@repo/config";
-import { LoginDto } from "./dto/login.dto";
-import { RefreshDto } from "./dto/refresh.dto";
+import { LoginDto } from "./dtos/login.dto";
+import { RefreshDto } from "./dtos/refresh.dto";
 import type { JwtRefreshPayload, JwtUser } from "./interfaces/jwt.interface";
 
 @Injectable()

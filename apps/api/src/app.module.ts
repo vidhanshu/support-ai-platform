@@ -4,6 +4,7 @@ import { PrismaModule } from "@repo/database";
 import { getRootEnvPath } from "@repo/config";
 import { HealthModule } from "./modules/health/health.module";
 import { AuthModule } from './auth/auth.module';
+import { WorkspaceModule } from './workspace/workspace.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { AuthModule } from './auth/auth.module';
     PrismaModule,
     HealthModule,
     AuthModule,
+    WorkspaceModule,
   ],
 })
 export class AppModule {}
