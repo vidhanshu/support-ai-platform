@@ -21,7 +21,7 @@ enum MessageRole {
 }
 
 model User {
-  id           String   @id @default(cuid())
+  id           String   @id @default(uuid())
   email        String   @unique
   name         String?
   passwordHash String?
@@ -35,7 +35,7 @@ model User {
 }
 
 model RefreshToken {
-  id         String   @id @default(cuid())
+  id         String   @id @default(uuid())
 
   userId     String
   tokenHash  String
@@ -48,7 +48,7 @@ model RefreshToken {
 }
 
 model Workspace {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   name      String
   slug      String   @unique
   createdAt DateTime @default(now())
@@ -63,7 +63,7 @@ model Workspace {
 }
 
 model WorkspaceMember {
-  id          String        @id @default(cuid())
+  id          String        @id @default(uuid())
   workspaceId String
   userId      String
   role        WorkspaceRole @default(MEMBER)
@@ -79,7 +79,7 @@ model WorkspaceMember {
 }
 
 model Agent {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   workspaceId String
   name        String
   description String?
@@ -96,7 +96,7 @@ model Agent {
 }
 
 model Document {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   workspaceId String
   title       String
   content     String?
@@ -112,7 +112,7 @@ model Document {
 }
 
 model AgentDocument {
-  id         String   @id @default(cuid())
+  id         String   @id @default(uuid())
   agentId    String
   documentId String
   createdAt  DateTime @default(now())
@@ -126,7 +126,7 @@ model AgentDocument {
 }
 
 model Conversation {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   workspaceId String
   agentId     String
   title       String?
@@ -142,7 +142,7 @@ model Conversation {
 }
 
 model Message {
-  id             String      @id @default(cuid())
+  id             String      @id @default(uuid())
   conversationId String
   role           MessageRole
   content        String
