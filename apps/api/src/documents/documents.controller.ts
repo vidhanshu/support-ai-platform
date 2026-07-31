@@ -24,13 +24,17 @@ export class DocumentsController {
   @Post(":id/complete")
   @RequireWorkspace()
   @WorkspaceRoles(WorkspaceRole.ADMIN, WorkspaceRole.OWNER)
-  complete(@CurrentWorkspace() workspace: WorkspaceContext, @Param("id") documentId: string) {
+  complete(
+    @CurrentWorkspace() workspace: WorkspaceContext,
+    @Param("id") documentId: string,
+  ) {
     return this.documentsService.complete(workspace, documentId);
   }
 
-  @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.documentsService.findOne(+id);
+  @Get()
+  @RequireWorkspace()
+  findAll(@CurrentWorkspace() workspace: WorkspaceContext) {
+    return this.documentsService.findAll(workspace);
   }
 
   @Delete(":id")

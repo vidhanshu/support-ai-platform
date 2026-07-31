@@ -33,6 +33,8 @@ export const ENV_KEYS = {
   MINIO_SECRET_KEY: "MINIO_SECRET_KEY",
   MINIO_REGION: "MINIO_REGION",
   MINIO_BUCKET: "MINIO_BUCKET",
+  REDIS_HOST: "REDIS_HOST",
+  REDIS_PORT: "REDIS_PORT",
 } as const;
 
 export const JWT_CONFIGS = {
@@ -55,4 +57,19 @@ export const INVITATION_CONFIGS = {
 export const STORAGE_CONFIGS = {
   UPLOAD_URL_EXPIRATION_SECONDS: 60 * 15,
   DOWNLOAD_URL_EXPIRATION_SECONDS: 60 * 15,
+} as const;
+
+export const QUEUE_CONFIGS = {
+  REDIS: {
+    HOST: ENV_KEYS.REDIS_HOST,
+    PORT: ENV_KEYS.REDIS_PORT,
+  },
+};
+
+export const QUEUE_NAMES = {
+  DOCUMENT_PROCESSING: "document-processing",
+} as const;
+
+export const JOB_NAMES = {
+  PROCESS_DOCUMENT: "process-document",
 } as const;

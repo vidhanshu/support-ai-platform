@@ -8,12 +8,16 @@ import { WorkspaceContext } from "../common/interfaces/request.interface";
 import { DocumentStatus, PrismaService } from "@repo/database";
 import path from "path";
 import { StorageService } from "../storage/storage.service";
+import { InjectQueue } from "@nestjs/bullmq";
+import { JOB_NAMES, QUEUE_NAMES } from "@repo/config";
+import type { Queue } from "bullmq";
 
 @Injectable()
 export class DocumentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storageService: StorageService,
+    @InjectQueue(QUEUE_NAMES.DOCUMENT_PROCESSING) private readonly queue: Queue,
   ) {}
 
   async uploadUrl(workspace: WorkspaceContext, dto: CreateUploadUrlDto) {
@@ -61,14 +65,20 @@ export class DocumentsService {
       data: { status: DocumentStatus.PROCESSING },
     });
 
-    // TODO:
-    // await this.ingestionQueue.add(...)
+    // add to queue
+    await this.queue.add(JOB_NAMES.PROCESS_DOCUMENT, {
+      documentId,
+    });
 
     return updatedDoc;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} document`;
+  async findAll(workspace: WorkspaceContext) {
+    return this.prisma.document.findMany({
+      where: {
+        workspaceId: workspace.id,
+      },
+    });
   }
 
   remove(id: number) {

@@ -1,20 +1,31 @@
 import { Module } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
+import { ConfigModule, ConfigService } from "@nestjs/config";
 import { PrismaModule } from "@repo/database";
-import { getRootEnvPath } from "@repo/config";
+import { getRootEnvPath, QUEUE_CONFIGS } from "@repo/config";
 import { HealthModule } from "./modules/health/health.module";
-import { AuthModule } from './auth/auth.module';
-import { WorkspaceModule } from './workspace/workspace.module';
-import { AgentsModule } from './agents/agents.module';
-import { InvitationsModule } from './invitations/invitations.module';
-import { DocumentsModule } from './documents/documents.module';
-import { StorageModule } from './storage/storage.module';
+import { AuthModule } from "./auth/auth.module";
+import { WorkspaceModule } from "./workspace/workspace.module";
+import { AgentsModule } from "./agents/agents.module";
+import { InvitationsModule } from "./invitations/invitations.module";
+import { DocumentsModule } from "./documents/documents.module";
+import { StorageModule } from "./storage/storage.module";
+import { CommonModule } from "./common/common.module";
+import { BullModule } from "@nestjs/bullmq";
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: getRootEnvPath(),
+    }),
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        connection: {
+          host: config.getOrThrow(QUEUE_CONFIGS.REDIS.HOST),
+          port: Number(config.getOrThrow(QUEUE_CONFIGS.REDIS.PORT)),
+        },
+      }),
     }),
     PrismaModule,
     HealthModule,
@@ -24,6 +35,7 @@ import { StorageModule } from './storage/storage.module';
     InvitationsModule,
     DocumentsModule,
     StorageModule,
+    CommonModule,
   ],
 })
 export class AppModule {}
