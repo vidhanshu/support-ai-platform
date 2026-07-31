@@ -20,6 +20,14 @@ enum MessageRole {
   SYSTEM
 }
 
+enum DocumentStatus {
+  UPLOADING
+  PROCESSING
+  PROCESSED
+  READY
+  FAILED
+}
+
 model User {
   id           String   @id @default(uuid())
   email        String   @unique
@@ -126,17 +134,19 @@ model Agent {
 }
 
 model Document {
-  id          String   @id @default(uuid())
-  workspaceId String
-  title       String
-  content     String?
-  sourceUrl   String?
-  mimeType    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String         @id @default(cuid())
+  name      String
+  objectKey String
+  mimeType  String
+  size      Int
+  status    DocumentStatus @default(UPLOADING)
 
-  workspace Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  agents    AgentDocument[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workspaceId String
+  workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  agents      AgentDocument[]
 
   @@index([workspaceId])
 }

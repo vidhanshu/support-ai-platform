@@ -29,7 +29,7 @@ export class WorkspaceRolesGuard implements CanActivate {
     const currentRole = request.workspace.role;
 
     if (!requiredRoles.includes(currentRole)) {
-      throw new ForbiddenException();
+      throw new ForbiddenException("You are not authorized to access this resource");
     }
 
     return true;
