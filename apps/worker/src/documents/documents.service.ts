@@ -3,7 +3,6 @@ import { Injectable, Logger } from "@nestjs/common";
 import {
   Document,
   DocumentStatus,
-  Prisma,
   PrismaService,
 } from "@repo/database";
 import { StorageService } from "@repo/storage";
@@ -12,10 +11,11 @@ import path from "path";
 import { pipeline } from "stream/promises";
 import { stat, rm } from "fs/promises";
 import { MIME_TYPE_TO_EXTENSION, MIME_TYPES } from "@repo/config";
-import { Chunk, EmbeddedChunk, ExtractedDocument } from "../interfaces";
+import { Chunk, ExtractedDocument } from "../interfaces";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { EmbeddingService } from "./embedding/embedding.service";
+import { VectorStoreService } from "./vector-store/vector-store.service";
 
 @Injectable()
 export class DocumentsService {
@@ -24,11 +24,8 @@ export class DocumentsService {
     private readonly storage: StorageService,
     private readonly prisma: PrismaService,
     private readonly embedService: EmbeddingService,
+    private readonly vectorStoreService: VectorStoreService,
   ) {}
-
-  vectorToSql(vector: number[]) {
-    return `[${vector.join(",")}]`;
-  }
 
   async loadDocument(documentId: string) {
     const doc = await this.prisma.document.findUnique({
@@ -96,30 +93,6 @@ export class DocumentsService {
     }));
   }
 
-  async storeEmbeddings(embeddedChunks: EmbeddedChunk[], documentId: string) {
-    if (embeddedChunks.length === 0) {
-      return;
-    }
-
-    const values = embeddedChunks.map(
-      (chunk) => Prisma.sql`(
-        ${crypto.randomUUID()},
-        ${chunk.text},
-        ${chunk.index},
-        ${this.vectorToSql(chunk.embedding)}::vector,
-        ${documentId},
-        NOW(),
-        NOW()
-      )`,
-    );
-
-    return this.prisma.$executeRaw`
-      INSERT INTO "Chunk"
-      ("id","text","chunkIndex","embedding","documentId","createdAt","updatedAt")
-      VALUES ${Prisma.join(values)}
-    `;
-  }
-
   async removeTemporaryFile(tmpFile: string) {
     await rm(tmpFile, { force: true });
   }
@@ -156,7 +129,7 @@ export class DocumentsService {
       const embeddedChunks = await this.embedService.embedChunks(chunks);
 
       // Store embeddings
-      await this.storeEmbeddings(embeddedChunks, documentId);
+      await this.vectorStoreService.store(embeddedChunks, documentId);
 
       await this.prisma.document.update({
         where: { id: documentId },
