@@ -10,6 +10,8 @@ import { InvitationsModule } from "./invitations/invitations.module";
 import { DocumentsModule } from "./documents/documents.module";
 import { CommonModule } from "./common/common.module";
 import { BullModule } from "@nestjs/bullmq";
+import { ChatModule } from './chat/chat.module';
+import { ConversationModule } from './conversation/conversation.module';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { BullModule } from "@nestjs/bullmq";
     InvitationsModule,
     DocumentsModule,
     CommonModule,
+    ChatModule,
+    ConversationModule,
   ],
 })
 export class AppModule {}
