@@ -10,6 +10,7 @@ import {
 import { Injectable } from "@nestjs/common";
 import { ENV_KEYS, STORAGE_CONFIGS } from "@repo/config";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { Readable } from "stream";
 
 @Injectable()
 export class StorageService {
@@ -72,6 +73,25 @@ export class StorageService {
       Key: objectKey,
     });
     await this.client.send(command);
+  }
+
+  async downloadObject(objectKey: string) {
+    const obj = await this.client.send(
+      new GetObjectCommand({
+        Bucket: this.configService.getOrThrow(ENV_KEYS.MINIO_BUCKET),
+        Key: objectKey,
+      }),
+    );
+
+    if (!obj.Body) {
+      throw new Error("Object body is empty");
+    }
+
+    return {
+      stream: obj.Body as Readable,
+      contentType: obj.ContentType,
+      contentLength: obj.ContentLength,
+    };
   }
 
   async objectExists(objectKey: string) {

@@ -54,6 +54,30 @@ export const INVITATION_CONFIGS = {
   EXPIRATION_DAYS: 3,
 } as const;
 
+export const MIME_TYPES = {
+  PDF: "application/pdf",
+  DOCX: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  TXT: "text/plain",
+  MD: "text/markdown",
+}
+
+export const DOCUMENT_CONFIGS = {
+  ALLOWED_FILE_TYPES: [
+    MIME_TYPES.PDF,
+    MIME_TYPES.DOCX,
+    MIME_TYPES.TXT,
+    MIME_TYPES.MD,
+  ],
+  MAX_ALLOWED_FILE_SIZE: 20 * 1024 * 1024, // 20MB
+} as const;
+
+export const MIME_TYPE_TO_EXTENSION = {
+  [MIME_TYPES.PDF]: ".pdf",
+  [MIME_TYPES.DOCX]: ".docx",
+  [MIME_TYPES.TXT]: ".txt",
+  [MIME_TYPES.MD]: ".md",
+} as const;
+
 export const STORAGE_CONFIGS = {
   UPLOAD_URL_EXPIRATION_SECONDS: 60 * 15,
   DOWNLOAD_URL_EXPIRATION_SECONDS: 60 * 15,

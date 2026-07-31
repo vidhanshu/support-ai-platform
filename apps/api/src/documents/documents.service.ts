@@ -2,14 +2,14 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from "@nestjs/common";
 import { CreateUploadUrlDto } from "./dto/create-upload-url.dto";
 import { WorkspaceContext } from "../common/interfaces/request.interface";
 import { DocumentStatus, PrismaService } from "@repo/database";
-import path from "path";
-import { StorageService } from "../storage/storage.service";
+import { StorageService } from "@repo/storage";
 import { InjectQueue } from "@nestjs/bullmq";
-import { JOB_NAMES, QUEUE_NAMES } from "@repo/config";
+import { JOB_NAMES, MIME_TYPE_TO_EXTENSION, QUEUE_NAMES } from "@repo/config";
 import type { Queue } from "bullmq";
 
 @Injectable()
@@ -24,7 +24,10 @@ export class DocumentsService {
     const { contentType, originalName, size } = dto;
     const documentId = crypto.randomUUID();
 
-    const extension = path.extname(originalName);
+    const extension =
+      MIME_TYPE_TO_EXTENSION[
+        contentType as keyof typeof MIME_TYPE_TO_EXTENSION
+      ];
     const objectKey = `workspaces/${workspace.slug}/documents/${documentId}${extension}`;
 
     const document = await this.prisma.document.create({
@@ -81,7 +84,16 @@ export class DocumentsService {
     });
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} document`;
+  async remove(workspace: WorkspaceContext, id: string) {
+    const doc = await this.prisma.document.findUnique({ where: { id } });
+    if (!doc) throw new NotFoundException("Document not found");
+    if (doc.workspaceId !== workspace.id) throw new UnauthorizedException();
+
+    await this.prisma.document.delete({ where: { id } });
+    await this.storageService.deleteObject(doc.objectKey);
+
+    // TODO: delete the chunks from vector db
+
+    return doc;
   }
 }

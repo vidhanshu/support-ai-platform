@@ -1,11 +1,13 @@
 generator client {
-  provider     = "prisma-client"
-  output       = "../src/generated/prisma"
-  moduleFormat = "cjs"
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  moduleFormat    = "cjs"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
   provider = "postgresql"
+  extensions = [vector]
 }
 
 enum WorkspaceRole {
@@ -147,10 +149,24 @@ model Document {
   workspaceId String
   workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   agents      AgentDocument[]
+  chunks      Chunk[]
 
   @@index([workspaceId])
 }
 
+model Chunk {
+  id         String                     @id @default(uuid())
+  text       String
+  chunkIndex Int
+  embedding  Unsupported("vector(768)")
+  createdAt  DateTime                   @default(now())
+  updatedAt  DateTime                   @updatedAt
+
+  documentId String?
+  document   Document? @relation(fields: [documentId], references: [id], onDelete: Cascade)
+}
+
+// AgentDocument is a many-to-many relationship between Agents and Documents
 model AgentDocument {
   id         String   @id @default(uuid())
   agentId    String

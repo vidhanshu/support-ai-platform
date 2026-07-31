@@ -8,7 +8,6 @@ import { WorkspaceModule } from "./workspace/workspace.module";
 import { AgentsModule } from "./agents/agents.module";
 import { InvitationsModule } from "./invitations/invitations.module";
 import { DocumentsModule } from "./documents/documents.module";
-import { StorageModule } from "./storage/storage.module";
 import { CommonModule } from "./common/common.module";
 import { BullModule } from "@nestjs/bullmq";
 
@@ -34,7 +33,6 @@ import { BullModule } from "@nestjs/bullmq";
     AgentsModule,
     InvitationsModule,
     DocumentsModule,
-    StorageModule,
     CommonModule,
   ],
 })

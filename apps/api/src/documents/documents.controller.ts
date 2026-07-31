@@ -38,7 +38,12 @@ export class DocumentsController {
   }
 
   @Delete(":id")
-  remove(@Param("id") id: string) {
-    return this.documentsService.remove(+id);
+  @RequireWorkspace()
+  @WorkspaceRoles(WorkspaceRole.ADMIN, WorkspaceRole.OWNER)
+  remove(
+    @Param("id") id: string,
+    @CurrentWorkspace() workspace: WorkspaceContext,
+  ) {
+    return this.documentsService.remove(workspace, id);
   }
 }
