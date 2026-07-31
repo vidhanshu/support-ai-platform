@@ -1,8 +1,3 @@
-export interface ExtractedDocument {
-  text: string;
-  metadata?: DocumentMetadata;
-}
-
 export interface DocumentMetadata {
   pageCount?: number;
   pageNumber?: number;
@@ -10,6 +5,11 @@ export interface DocumentMetadata {
   language?: string;
   createdAt?: string;
   modifiedAt?: string;
+}
+
+export interface ExtractedDocument {
+  text: string;
+  metadata?: DocumentMetadata;
 }
 
 export interface Chunk {

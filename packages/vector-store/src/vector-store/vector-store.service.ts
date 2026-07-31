@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
-import { EmbeddedChunk } from "../../interfaces";
 import { Prisma, PrismaService } from "@repo/database";
+import { EmbeddedChunk } from '@repo/contracts';
 
 @Injectable()
 export class VectorStoreService {

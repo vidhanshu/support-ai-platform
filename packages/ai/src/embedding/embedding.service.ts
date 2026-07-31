@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import ollama from "ollama";
-import { Chunk } from "../../interfaces";
+import type { Chunk } from "@repo/contracts";
 
 @Injectable()
 export class EmbeddingService {
