@@ -1,10 +1,6 @@
 import os from "os";
 import { Injectable, Logger } from "@nestjs/common";
-import {
-  Document,
-  DocumentStatus,
-  PrismaService,
-} from "@repo/database";
+import { Document, DocumentStatus, PrismaService } from "@repo/database";
 import { StorageService } from "@repo/storage";
 import { createWriteStream } from "fs";
 import path from "path";
@@ -70,11 +66,19 @@ export class DocumentsService {
       throw new Error(`No text found in PDF ${tmpFile}`);
     }
     const text = docs.map((doc) => doc.pageContent).join("\n");
+    const title = docs[0]?.metadata?.pdf?.info?.Title;
+    const pageNumber = docs[0]?.metadata?.loc?.pageNumber;
+    const language = docs[0]?.metadata?.pdf?.info?.Language;
 
     return {
       text,
       metadata: {
         pageCount: docs.length,
+        pageNumber,
+        title,
+        language,
+        createdAt: docs[0]?.metadata?.pdf?.info?.CreationDate,
+        modifiedAt: docs[0]?.metadata?.pdf?.info?.ModDate,
       },
     };
   }
@@ -90,6 +94,7 @@ export class DocumentsService {
     return chunks.map((chunk, index) => ({
       text: chunk,
       index,
+      metadata: extractedDocument.metadata,
     }));
   }
 

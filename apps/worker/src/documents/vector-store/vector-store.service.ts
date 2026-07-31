@@ -21,6 +21,8 @@ export class VectorStoreService {
         ${chunk.text},
         ${chunk.index},
         ${this.vectorToSql(chunk.embedding)}::vector,
+        ${chunk.tokenCount},
+        ${chunk.metadata ? JSON.stringify(chunk.metadata) : null},
         ${documentId},
         NOW(),
         NOW()
@@ -29,7 +31,7 @@ export class VectorStoreService {
 
     return this.prisma.$executeRaw`
       INSERT INTO "Chunk"
-      ("id","text","chunkIndex","embedding","documentId","createdAt","updatedAt")
+      ("id","text","chunkIndex","embedding","tokenCount","metadata","documentId","createdAt","updatedAt")
       VALUES ${Prisma.join(values)}
     `;
   }

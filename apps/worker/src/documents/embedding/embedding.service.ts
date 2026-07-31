@@ -12,6 +12,9 @@ export class EmbeddingService {
     return result.embedding;
   }
 
+  async countTokens(text: string) {
+    return Math.ceil(text.length / 4);
+  }
 
   async embedChunks(chunks: Chunk[]) {
     const result = [];
@@ -21,6 +24,8 @@ export class EmbeddingService {
       result.push({
         ...chunk,
         embedding,
+        tokenCount: await this.countTokens(chunk.text),
+        metadata: chunk.metadata,
       });
     }
 
