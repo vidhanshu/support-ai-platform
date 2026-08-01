@@ -22,6 +22,7 @@
     "@nestjs/core": "^11.1.3",
     "@nestjs/mapped-types": "*",
     "@repo/contracts": "workspace:*",
+    "@repo/config": "workspace:*",
     "@repo/database": "workspace:*",
     "@repo/ai": "workspace:*",
     "@repo/vector-store": "workspace:*",

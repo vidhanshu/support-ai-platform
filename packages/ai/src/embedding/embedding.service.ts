@@ -1,11 +1,15 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { AI_CONFIGS, ENV_KEYS } from "@repo/config";
 import type { Chunk, EmbeddedChunk } from "@repo/contracts";
 import { Ollama } from "ollama";
 
+/** Keep models loaded indefinitely to avoid multi-second reload costs. */
+const KEEP_ALIVE = -1;
+
 @Injectable()
 export class EmbeddingService {
+  private readonly logger = new Logger(EmbeddingService.name);
   private readonly client: Ollama;
   private readonly model: string;
 
@@ -19,10 +23,15 @@ export class EmbeddingService {
   }
 
   async embed(text: string) {
+    const start = performance.now();
     const result = await this.client.embeddings({
       model: this.model,
       prompt: text,
+      keep_alive: KEEP_ALIVE,
     });
+    this.logger.log(
+      `[perf] ollama.embed model=${this.model} total=${Math.round(performance.now() - start)}ms chars=${text.length}`,
+    );
     return result.embedding;
   }
 

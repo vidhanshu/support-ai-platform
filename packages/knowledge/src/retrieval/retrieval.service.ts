@@ -1,7 +1,8 @@
 import { VectorStoreService } from "@repo/vector-store";
 import { Injectable, Logger } from "@nestjs/common";
-import { Chunk, PrismaService } from "@repo/database";
+import { Chunk, KnowledgeSourceStatus, PrismaService } from "@repo/database";
 import { EmbeddingService } from "@repo/ai";
+import { AI_CONFIGS } from "@repo/config";
 
 @Injectable()
 export class RetrievalService {
@@ -13,42 +14,68 @@ export class RetrievalService {
     private readonly vectorStoreService: VectorStoreService,
   ) {}
 
-  async retrieve(agentId: string, query: string) {
+  async retrieve(
+    agentId: string,
+    query: string,
+    limit: number = AI_CONFIGS.RETRIEVAL_TOP_K,
+  ): Promise<{ chunks: Chunk[]; warning?: string }> {
+    const totalStart = performance.now();
+
     try {
-      this.logger.debug(`[retrieval] start agentId=${agentId}`);
+      let stepStart = performance.now();
       const knowledgeSources = await this.prisma.agentKnowledgeSource.findMany({
-        where: { agentId },
+        where: {
+          agentId,
+          knowledgeSource: { status: KnowledgeSourceStatus.READY },
+        },
       });
       const knowledgeSourceIds = knowledgeSources.map(
         (ks) => ks.knowledgeSourceId,
       );
-      this.logger.debug(
-        `[retrieval] knowledgeSources=${knowledgeSourceIds.length}`,
+      this.logger.log(
+        `[perf] retrieval.load_sources=${this.elapsed(stepStart)}ms count=${knowledgeSourceIds.length} ids=${JSON.stringify(knowledgeSourceIds)}`,
       );
 
-      this.logger.debug(`[retrieval] embedding query`);
+      if (knowledgeSourceIds.length === 0) {
+        this.logger.warn(
+          `[retrieval] agent ${agentId} has no attached knowledge sources`,
+        );
+        return {
+          chunks: [],
+          warning:
+            "No knowledge sources attached to this agent. Attach one before chatting.",
+        };
+      }
+
+      stepStart = performance.now();
       const embeddedQuery = await this.embeddingService.embed(query);
-      this.logger.debug(
-        `[retrieval] embedding done dims=${embeddedQuery.length}`,
+      this.logger.log(
+        `[perf] retrieval.embed_query=${this.elapsed(stepStart)}ms dims=${embeddedQuery.length}`,
       );
 
-      this.logger.debug(`[retrieval] vector search start`);
+      stepStart = performance.now();
       const relevantChunks = await this.vectorStoreService.search(
         embeddedQuery,
         knowledgeSourceIds,
+        limit,
       );
-      this.logger.debug(
-        `[retrieval] vector search done chunks=${(relevantChunks as Chunk[]).length}`,
+      this.logger.log(
+        `[perf] retrieval.vector_search=${this.elapsed(stepStart)}ms chunks=${relevantChunks.length} limit=${limit}`,
       );
 
-      return relevantChunks as Chunk[];
+      this.logger.log(`[perf] retrieval.total=${this.elapsed(totalStart)}ms`);
+
+      return { chunks: relevantChunks as Chunk[] };
     } catch (error) {
-      console.error("[retrieval] failed", error);
       this.logger.error(
-        `[retrieval] failed agentId=${agentId}`,
+        `[perf] retrieval.failed after=${this.elapsed(totalStart)}ms`,
         error instanceof Error ? error.stack : String(error),
       );
       throw error;
     }
+  }
+
+  private elapsed(start: number) {
+    return Math.round(performance.now() - start);
   }
 }

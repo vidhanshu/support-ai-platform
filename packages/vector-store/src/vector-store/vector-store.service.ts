@@ -46,8 +46,27 @@ export class VectorStoreService {
       return [];
     }
 
-    return this.prisma.$queryRaw`
-      SELECT *
+    return this.prisma.$queryRaw<
+      Array<{
+        id: string;
+        text: string;
+        chunkIndex: number;
+        tokenCount: number;
+        metadata: unknown;
+        knowledgeSourceId: string;
+        createdAt: Date;
+        updatedAt: Date;
+      }>
+    >`
+      SELECT
+        "id",
+        "text",
+        "chunkIndex",
+        "tokenCount",
+        "metadata",
+        "knowledgeSourceId",
+        "createdAt",
+        "updatedAt"
       FROM "Chunk"
       WHERE "knowledgeSourceId" IN (${Prisma.join(knowledgeSourceIds)})
       ORDER BY "embedding" <=> ${this.vectorToSql(embeddedQuery)}::vector ASC

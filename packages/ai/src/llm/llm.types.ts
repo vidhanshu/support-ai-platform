@@ -9,6 +9,9 @@ export interface LLMGenerateOptions {
   temperature?: number;
 
   model?: string;
+
+  /** Ollama context window; lower values reduce memory/prefill cost */
+  numCtx?: number;
 }
 
 export interface LLMProvider {

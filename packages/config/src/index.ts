@@ -43,7 +43,13 @@ export const AI_CONFIGS = {
   DEFAULT_CHAT_MODEL: "llama3.1",
   DEFAULT_EMBED_MODEL: "nomic-embed-text",
   DEFAULT_TEMPERATURE: 0.2,
-  MAX_CONTEXT_MESSAGES: 20,
+  /** Unused for RAG prompt today (history is not sent to the LLM) */
+  MAX_CONTEXT_MESSAGES: 6,
+  /** More chunks = better recall; larger prompts also mean slower CPU prefill */
+  RETRIEVAL_TOP_K: 5,
+  MAX_CHUNK_CHARS: 1000,
+  /** Must be large enough to fit system prompt + retrieved chunks */
+  NUM_CTX: 4096,
 } as const;
 
 export const JWT_CONFIGS = {

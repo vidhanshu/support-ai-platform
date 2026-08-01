@@ -22,12 +22,20 @@ export type ChatSource = {
 };
 
 export type ChatStreamEvent =
+  | { type: "status"; data: { stage: string; ms?: number } }
   | {
       type: "meta";
-      data: { conversationId: string; sources: ChatSource[] };
+      data: {
+        conversationId: string;
+        sources: ChatSource[];
+        warning?: string;
+      };
     }
   | { type: "token"; data: { content: string } }
-  | { type: "done"; data: { message: Message } }
+  | {
+      type: "done";
+      data: { message: Message; sources: ChatSource[] };
+    }
   | { type: "error"; data: { message: string } };
 
 type PreparedChat = {
@@ -36,6 +44,7 @@ type PreparedChat = {
   model: string;
   temperature: number;
   sources: ChatSource[];
+  warning?: string;
 };
 
 @Injectable()
@@ -54,32 +63,61 @@ export class ChatService {
     agentId: string,
     dto: SendMessageDto,
   ): AsyncGenerator<ChatStreamEvent> {
+    const totalStart = performance.now();
+
+    yield { type: "status", data: { stage: "started", ms: 0 } };
+
+    const prepareStart = performance.now();
     const prepared = await this.prepareChat(workspace, agentId, dto);
+    const prepareMs = this.elapsed(prepareStart);
+    this.logger.log(
+      `[perf] prepare_total=${prepareMs}ms sources=${prepared.sources.length}`,
+    );
+    yield { type: "status", data: { stage: "prepare_done", ms: prepareMs } };
 
     yield {
       type: "meta",
       data: {
         conversationId: prepared.conversation.id,
         sources: prepared.sources,
+        ...(prepared.warning ? { warning: prepared.warning } : {}),
       },
     };
 
-    this.logger.debug(
-      `[chat] llm stream start model=${prepared.model} temperature=${prepared.temperature} messages=${prepared.messages.length}`,
-    );
-
     let assistantContent = "";
+    const streamStart = performance.now();
+    let firstTokenMs: number | null = null;
 
     try {
+      this.logger.log(
+        `[perf] llm_stream_start model=${prepared.model} messages=${prepared.messages.length}`,
+      );
+
       for await (const token of this.llmService.stream({
         messages: prepared.messages,
         model: prepared.model,
         temperature: prepared.temperature,
+        numCtx: AI_CONFIGS.NUM_CTX,
       })) {
+        if (firstTokenMs === null) {
+          firstTokenMs = this.elapsed(streamStart);
+          this.logger.log(`[perf] llm_first_token=${firstTokenMs}ms`);
+          yield {
+            type: "status",
+            data: { stage: "first_token", ms: firstTokenMs },
+          };
+        }
+
         assistantContent += token;
         yield { type: "token", data: { content: token } };
       }
 
+      const streamMs = this.elapsed(streamStart);
+      this.logger.log(
+        `[perf] llm_stream_total=${streamMs}ms responseLength=${assistantContent.length}`,
+      );
+
+      const saveStart = performance.now();
       const assistantMessage = await this.prismaService.message.create({
         data: {
           role: MessageRole.ASSISTANT,
@@ -87,16 +125,22 @@ export class ChatService {
           conversationId: prepared.conversation.id,
         },
       });
+      this.logger.log(`[perf] save_assistant=${this.elapsed(saveStart)}ms`);
 
-      this.logger.debug(
-        `[chat] llm stream done responseLength=${assistantContent.length} messageId=${assistantMessage.id}`,
+      this.logger.log(
+        `[perf] summary total=${this.elapsed(totalStart)}ms prepare=${prepareMs}ms llm_first_token=${firstTokenMs ?? -1}ms llm_stream=${streamMs}ms`,
       );
 
-      yield { type: "done", data: { message: assistantMessage } };
+      yield {
+        type: "done",
+        data: {
+          message: assistantMessage,
+          sources: prepared.sources,
+        },
+      };
     } catch (error) {
-      console.error("[chat] stream failed", error);
       this.logger.error(
-        `[chat] stream failed agentId=${agentId}`,
+        `[perf] stream_failed after=${this.elapsed(totalStart)}ms`,
         error instanceof Error ? error.stack : String(error),
       );
       yield {
@@ -115,16 +159,16 @@ export class ChatService {
     dto: SendMessageDto,
   ): Promise<PreparedChat> {
     const { message, conversationId } = dto;
-    this.logger.debug(
-      `[chat] start agentId=${agentId} workspaceId=${workspace.id} conversationId=${conversationId ?? "new"}`,
-    );
 
+    let stepStart = performance.now();
     const agent = await this.prismaService.agent.findFirst({
       where: { id: agentId, workspaceId: workspace.id },
     });
+    this.logger.log(`[perf] load_agent=${this.elapsed(stepStart)}ms`);
 
     if (!agent) throw new NotFoundException("Agent not found");
 
+    stepStart = performance.now();
     let conversation: Conversation | null = null;
     if (!conversationId) {
       conversation = await this.prismaService.conversation.create({
@@ -143,9 +187,13 @@ export class ChatService {
         },
       });
     }
+    this.logger.log(
+      `[perf] load_or_create_conversation=${this.elapsed(stepStart)}ms`,
+    );
 
     if (!conversation) throw new NotFoundException("Conversation not found");
 
+    stepStart = performance.now();
     await this.prismaService.message.create({
       data: {
         role: MessageRole.USER,
@@ -153,45 +201,68 @@ export class ChatService {
         conversationId: conversation.id,
       },
     });
+    this.logger.log(`[perf] save_user_message=${this.elapsed(stepStart)}ms`);
 
-    const relevantChunks = await this.retrievalService.retrieve(
-      agentId,
-      message,
+    stepStart = performance.now();
+    const { chunks: relevantChunks, warning } =
+      await this.retrievalService.retrieve(agentId, message);
+    this.logger.log(
+      `[perf] retrieval_total=${this.elapsed(stepStart)}ms chunks=${relevantChunks.length}`,
     );
-    this.logger.debug(`[chat] retrieval done chunks=${relevantChunks.length}`);
 
-    const history = await this.prismaService.message.findMany({
-      where: { conversationId: conversation.id },
-      orderBy: { createdAt: "asc" },
-      take: AI_CONFIGS.MAX_CONTEXT_MESSAGES,
-    });
+    stepStart = performance.now();
+    const context = formatRetrievedContext(
+      relevantChunks,
+      AI_CONFIGS.MAX_CHUNK_CHARS,
+    );
 
-    const context = formatRetrievedContext(relevantChunks);
+    // Only retrieved chunks + current question — no conversation history
     const messages: ChatMessage[] = [
       {
         role: "system",
         content: buildRAGPrompt(context, agent.systemPrompt),
       },
-      ...history.map((item) => ({
-        role:
-          item.role === MessageRole.ASSISTANT
-            ? ("assistant" as const)
-            : ("user" as const),
-        content: item.content,
-      })),
+      {
+        role: "user",
+        content: message,
+      },
     ];
+
+    const promptChars = messages.reduce((sum, m) => sum + m.content.length, 0);
+    this.logger.log(
+      `[perf] build_prompt=${this.elapsed(stepStart)}ms contextChars=${context.length} promptChars=${promptChars} messages=${messages.length}`,
+    );
+
+    const sources = this.toSources(relevantChunks);
+    this.logger.log(`[perf] sources_ready count=${sources.length}`);
 
     return {
       conversation,
       messages,
       model: agent.model ?? AI_CONFIGS.DEFAULT_CHAT_MODEL,
       temperature: agent.temperature ?? AI_CONFIGS.DEFAULT_TEMPERATURE,
-      sources: relevantChunks.map((chunk) => ({
-        id: chunk.id,
-        text: chunk.text,
-        metadata: chunk.metadata,
-        knowledgeSourceId: chunk.knowledgeSourceId,
-      })),
+      sources,
+      warning,
     };
+  }
+
+  private toSources(
+    chunks: Array<{
+      id: string;
+      text: string;
+      metadata?: unknown;
+      knowledgeSourceId: string;
+    }>,
+  ): ChatSource[] {
+    return chunks.map((chunk) => ({
+      id: chunk.id,
+      text: chunk.text,
+      metadata: chunk.metadata ?? null,
+      knowledgeSourceId: chunk.knowledgeSourceId,
+    }));
+  }
+
+  private elapsed(start: number) {
+    return Math.round(performance.now() - start);
   }
 }

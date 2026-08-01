@@ -1,6 +1,9 @@
 import { Ollama } from "ollama";
 import type { LLMGenerateOptions, LLMProvider } from "../llm.types";
 
+/** Keep models loaded indefinitely to avoid multi-second reload costs. */
+const KEEP_ALIVE = -1;
+
 export class OllamaProvider implements LLMProvider {
   private readonly client: Ollama;
 
@@ -13,61 +16,78 @@ export class OllamaProvider implements LLMProvider {
 
   async generate(options: LLMGenerateOptions) {
     const model = options.model ?? this.defaultModel;
-    console.log("[ollama] generate start", {
-      model,
-      temperature: options.temperature ?? 0.2,
-      messageCount: options.messages.length,
-    });
+    const start = performance.now();
 
     try {
       const response = await this.client.chat({
         model,
         messages: options.messages,
+        keep_alive: KEEP_ALIVE,
         options: {
           temperature: options.temperature ?? 0.2,
+          ...(options.numCtx ? { num_ctx: options.numCtx } : {}),
         },
       });
 
-      console.log("[ollama] generate done", {
-        model,
-        contentLength: response.message.content?.length ?? 0,
-      });
+      console.log(
+        `[perf] ollama.generate model=${model} total=${Math.round(performance.now() - start)}ms`,
+      );
 
       return response.message.content ?? "";
     } catch (error) {
-      console.error("[ollama] generate failed", { model, error });
+      console.error(
+        `[perf] ollama.generate_failed model=${model} after=${Math.round(performance.now() - start)}ms`,
+        error,
+      );
       throw error;
     }
   }
 
   async *stream(options: LLMGenerateOptions) {
     const model = options.model ?? this.defaultModel;
-    console.log("[ollama] stream start", {
-      model,
-      temperature: options.temperature ?? 0.2,
-      messageCount: options.messages.length,
-    });
+    const start = performance.now();
+    let firstTokenMs: number | null = null;
+    let tokens = 0;
 
     try {
       const response = await this.client.chat({
         model,
         messages: options.messages,
         stream: true,
+        keep_alive: KEEP_ALIVE,
         options: {
           temperature: options.temperature ?? 0.2,
+          ...(options.numCtx ? { num_ctx: options.numCtx } : {}),
         },
       });
 
+      console.log(
+        `[perf] ollama.stream_request_opened model=${model} open=${Math.round(performance.now() - start)}ms`,
+      );
+
       for await (const chunk of response) {
         const content = chunk.message.content;
-        if (content) {
-          yield content;
+        if (!content) continue;
+
+        if (firstTokenMs === null) {
+          firstTokenMs = Math.round(performance.now() - start);
+          console.log(
+            `[perf] ollama.stream_first_token model=${model} first_token=${firstTokenMs}ms`,
+          );
         }
+
+        tokens += 1;
+        yield content;
       }
 
-      console.log("[ollama] stream done", { model });
+      console.log(
+        `[perf] ollama.stream_done model=${model} total=${Math.round(performance.now() - start)}ms tokens=${tokens} first_token=${firstTokenMs ?? -1}ms`,
+      );
     } catch (error) {
-      console.error("[ollama] stream failed", { model, error });
+      console.error(
+        `[perf] ollama.stream_failed model=${model} after=${Math.round(performance.now() - start)}ms`,
+        error,
+      );
       throw error;
     }
   }

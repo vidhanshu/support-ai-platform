@@ -86,7 +86,11 @@ export class ChatController {
   }
 
   private writeSse(res: Response, event: ChatStreamEvent) {
-    res.write(`event: ${event.type}\n`);
-    res.write(`data: ${JSON.stringify(event.data)}\n\n`);
+    // Single data envelope so Postman shows type + payload on every event
+    // (named `event:` lines are easy to miss in Postman's SSE UI)
+    res.write(`data: ${JSON.stringify(event)}\n\n`);
+    if (typeof (res as Response & { flush?: () => void }).flush === "function") {
+      (res as Response & { flush: () => void }).flush();
+    }
   }
 }
