@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import ollama from "ollama";
-import type { Chunk } from "@repo/contracts";
+import type { Chunk, EmbeddedChunk } from "@repo/contracts";
 
 @Injectable()
 export class EmbeddingService {
@@ -16,8 +16,8 @@ export class EmbeddingService {
     return Math.ceil(text.length / 4);
   }
 
-  async embedChunks(chunks: Chunk[]) {
-    const result = [];
+  async embedChunks(chunks: Chunk[]): Promise<EmbeddedChunk[]> {
+    const result: EmbeddedChunk[] = [];
     for (const chunk of chunks) {
       const embedding = await this.embed(chunk.text);
 
@@ -25,7 +25,6 @@ export class EmbeddingService {
         ...chunk,
         embedding,
         tokenCount: await this.countTokens(chunk.text),
-        metadata: chunk.metadata,
       });
     }
 

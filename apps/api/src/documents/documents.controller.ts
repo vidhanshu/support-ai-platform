@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete } from "@nestjs/common";
+import { Controller, Get, Post, Body, Param } from "@nestjs/common";
 import { DocumentsService } from "./documents.service";
 import { CreateUploadUrlDto } from "./dto/create-upload-url.dto";
 import { RequireWorkspace } from "../common/decorators/workspace-protected.decorator";
@@ -7,12 +7,12 @@ import { WorkspaceRole } from "@repo/database";
 import { CurrentWorkspace } from "../workspace/decorators/current-workspace.decorator";
 import type { WorkspaceContext } from "../common/interfaces/request.interface";
 
+@RequireWorkspace()
 @Controller("documents")
 export class DocumentsController {
   constructor(private readonly documentsService: DocumentsService) {}
 
   @Post("upload-url")
-  @RequireWorkspace()
   @WorkspaceRoles(WorkspaceRole.ADMIN, WorkspaceRole.OWNER)
   uploadUrl(
     @Body() dto: CreateUploadUrlDto,
@@ -22,7 +22,6 @@ export class DocumentsController {
   }
 
   @Post(":id/complete")
-  @RequireWorkspace()
   @WorkspaceRoles(WorkspaceRole.ADMIN, WorkspaceRole.OWNER)
   complete(
     @CurrentWorkspace() workspace: WorkspaceContext,
@@ -32,18 +31,7 @@ export class DocumentsController {
   }
 
   @Get()
-  @RequireWorkspace()
   findAll(@CurrentWorkspace() workspace: WorkspaceContext) {
     return this.documentsService.findAll(workspace);
-  }
-
-  @Delete(":id")
-  @RequireWorkspace()
-  @WorkspaceRoles(WorkspaceRole.ADMIN, WorkspaceRole.OWNER)
-  remove(
-    @Param("id") id: string,
-    @CurrentWorkspace() workspace: WorkspaceContext,
-  ) {
-    return this.documentsService.remove(workspace, id);
   }
 }

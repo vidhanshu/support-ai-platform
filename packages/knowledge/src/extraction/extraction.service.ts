@@ -1,31 +1,47 @@
 import { Injectable } from "@nestjs/common";
-import { ExtractedDocument } from "@repo/contracts";
+import {
+  ExtractedDocument,
+  KnowledgeSourceMetadata,
+} from "@repo/contracts";
 import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 
 @Injectable()
 export class ExtractionService {
   async extractPdfText(tmpFile: string): Promise<ExtractedDocument> {
     const loader = new PDFLoader(tmpFile);
-    const docs = await loader.load();
+    const pdf = await loader.load();
 
-    if (docs.length === 0) {
+    if (pdf.length === 0) {
       throw new Error(`No text found in PDF ${tmpFile}`);
     }
-    const text = docs.map((doc) => doc.pageContent).join("\n");
-    const title = docs[0]?.metadata?.pdf?.info?.Title;
-    const pageNumber = docs[0]?.metadata?.loc?.pageNumber;
-    const language = docs[0]?.metadata?.pdf?.info?.Language;
 
-    return {
-      text,
-      metadata: {
-        pageCount: docs.length,
-        pageNumber,
-        title,
-        language,
-        createdAt: docs[0]?.metadata?.pdf?.info?.CreationDate,
-        modifiedAt: docs[0]?.metadata?.pdf?.info?.ModDate,
-      },
+    const info = pdf[0]?.metadata?.pdf?.info as
+      | Record<string, unknown>
+      | undefined;
+
+    const metadata: KnowledgeSourceMetadata = {
+      title: typeof info?.Title === "string" ? info.Title : undefined,
+      pageCount: pdf.length,
+      language: typeof info?.Language === "string" ? info.Language : undefined,
+      author: typeof info?.Author === "string" ? info.Author : undefined,
+      createdAt:
+        typeof info?.CreationDate === "string" ? info.CreationDate : undefined,
+      modifiedAt:
+        typeof info?.ModDate === "string" ? info.ModDate : undefined,
     };
+
+    const pages = pdf.map((page, index) => {
+      const pageNumber =
+        typeof page.metadata?.loc?.pageNumber === "number"
+          ? page.metadata.loc.pageNumber
+          : index + 1;
+
+      return {
+        text: page.pageContent,
+        pageNumber,
+      };
+    });
+
+    return { pages, metadata };
   }
 }

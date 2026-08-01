@@ -12,6 +12,7 @@ import { CommonModule } from "./common/common.module";
 import { BullModule } from "@nestjs/bullmq";
 import { ChatModule } from './chat/chat.module';
 import { ConversationModule } from './conversation/conversation.module';
+import { KnowledgeModule } from './knowledge/knowledge.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ConversationModule } from './conversation/conversation.module';
     CommonModule,
     ChatModule,
     ConversationModule,
+    KnowledgeModule,
   ],
 })
 export class AppModule {}

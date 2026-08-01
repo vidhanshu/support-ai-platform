@@ -112,22 +112,4 @@ export class DocumentsService {
       },
     });
   }
-
-  async remove(workspace: WorkspaceContext, id: string) {
-    const doc = await this.prisma.document.findFirst({
-      where: { id, knowledgeSource: { workspaceId: workspace.id } },
-      select: {
-        objectKey: true,
-      },
-    });
-
-    if (!doc) throw new NotFoundException("Document not found");
-
-    await this.prisma.document.delete({ where: { id } });
-    await this.storageService.deleteObject(doc.objectKey);
-
-    // TODO: delete the chunks from vector db
-
-    return doc;
-  }
 }

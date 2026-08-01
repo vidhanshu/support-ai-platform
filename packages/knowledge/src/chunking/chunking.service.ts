@@ -10,12 +10,28 @@ export class ChunkingService {
       chunkOverlap: 200,
     });
 
-    const chunks = await splitter.splitText(extractedDocument.text);
+    const chunks: Chunk[] = [];
+    let chunkIndex = 0;
 
-    return chunks.map((chunk, index) => ({
-      text: chunk,
-      index,
-      metadata: extractedDocument.metadata,
-    }));
+    for (const page of extractedDocument.pages) {
+      if (!page.text.trim()) {
+        continue;
+      }
+
+      const pageChunks = await splitter.splitText(page.text);
+
+      for (const text of pageChunks) {
+        chunks.push({
+          text,
+          index: chunkIndex,
+          metadata: {
+            pageNumber: page.pageNumber,
+          },
+        });
+        chunkIndex += 1;
+      }
+    }
+
+    return chunks;
   }
 }

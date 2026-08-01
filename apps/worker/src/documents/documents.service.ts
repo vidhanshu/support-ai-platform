@@ -1,6 +1,11 @@
 import os from "os";
 import { Injectable, Logger } from "@nestjs/common";
-import { Document, KnowledgeSourceStatus, PrismaService } from "@repo/database";
+import {
+  Document,
+  KnowledgeSourceStatus,
+  Prisma,
+  PrismaService,
+} from "@repo/database";
 import { StorageService } from "@repo/storage";
 import { createWriteStream } from "fs";
 import path from "path";
@@ -9,7 +14,10 @@ import { stat, rm } from "fs/promises";
 import { MIME_TYPE_TO_EXTENSION, MIME_TYPES } from "@repo/config";
 import { EmbeddingService } from "@repo/ai";
 import { VectorStoreService } from "@repo/vector-store";
-import { ExtractedDocument } from "@repo/contracts";
+import {
+  ExtractedDocument,
+  KnowledgeSourceMetadata,
+} from "@repo/contracts";
 import { ChunkingService, ExtractionService } from "@repo/knowledge";
 
 @Injectable()
@@ -83,14 +91,11 @@ export class DocumentsService {
     let tmpFile: string | undefined;
     let knowledgeSourceId: string | null = null;
     try {
-      // Load document
       const doc = await this.loadDocument(documentId);
       knowledgeSourceId = doc.knowledgeSourceId;
 
-      // Download document
       tmpFile = await this.downloadDocument(doc);
 
-      // Extract content based on MIME type
       let extractedContent: ExtractedDocument;
       switch (doc.mimeType) {
         case MIME_TYPES.PDF:
@@ -104,19 +109,28 @@ export class DocumentsService {
           throw new Error(`Unsupported MIME type: ${doc.mimeType}`);
       }
 
-      // Create chunks
+      // Prefer PDF title; fall back to uploaded filename for KnowledgeSource
+      const sourceMetadata: KnowledgeSourceMetadata = {
+        ...extractedContent.metadata,
+        title: extractedContent.metadata.title || doc.originalFilename,
+      };
+
+      await this.prisma.knowledgeSource.update({
+        where: { id: knowledgeSourceId },
+        data: {
+          metadata: sourceMetadata as Prisma.InputJsonValue,
+          ...(sourceMetadata.title
+            ? { name: sourceMetadata.title }
+            : {}),
+        },
+      });
+
       const chunks = await this.chunkingService.createChunks(extractedContent);
-
-      // Embed chunks
       const embeddedChunks = await this.embedService.embedChunks(chunks);
-
-      // Store embeddings
       await this.vectorStoreService.store(embeddedChunks, knowledgeSourceId);
 
-      // Mark the knowledge source as ready
       await this.updateKnowledgeSourceStatus(knowledgeSourceId, "success");
 
-      // just log the success
       this.logger.log(`Processed document ${documentId} successfully`);
     } catch (error) {
       console.log(error);

@@ -1,6 +1,7 @@
+import { randomUUID } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { Prisma, PrismaService } from "@repo/database";
-import { EmbeddedChunk } from '@repo/contracts';
+import type { EmbeddedChunk } from "@repo/contracts";
 
 @Injectable()
 export class VectorStoreService {
@@ -17,7 +18,7 @@ export class VectorStoreService {
 
     const values = embeddedChunks.map(
       (chunk) => Prisma.sql`(
-        ${crypto.randomUUID()},
+        ${randomUUID()},
         ${chunk.text},
         ${chunk.index},
         ${this.vectorToSql(chunk.embedding)}::vector,
