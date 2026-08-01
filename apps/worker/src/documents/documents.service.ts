@@ -1,6 +1,6 @@
 import os from "os";
 import { Injectable, Logger } from "@nestjs/common";
-import { Document, DocumentStatus, PrismaService } from "@repo/database";
+import { Document, KnowledgeSourceStatus, PrismaService } from "@repo/database";
 import { StorageService } from "@repo/storage";
 import { createWriteStream } from "fs";
 import path from "path";
@@ -49,11 +49,13 @@ export class DocumentsService {
     const { size } = await stat(tmpFile);
 
     if (size !== doc.size) {
-      this.logger.error(`Document size mismatch for ${doc.name}`);
+      this.logger.error(`Document size mismatch for ${doc.originalFilename}`);
       throw new Error("Document size mismatch");
     }
 
-    this.logger.log(`Downloaded ${doc.name} to ${tmpFile} (${size} bytes)`);
+    this.logger.log(
+      `Downloaded ${doc.originalFilename} to ${tmpFile} (${size} bytes)`,
+    );
 
     return tmpFile;
   }
@@ -62,11 +64,28 @@ export class DocumentsService {
     await rm(tmpFile, { force: true });
   }
 
+  async updateKnowledgeSourceStatus(
+    knowledgeSourceId: string,
+    type: "success" | "failed",
+  ) {
+    await this.prisma.knowledgeSource.update({
+      where: { id: knowledgeSourceId },
+      data: {
+        status:
+          type === "success"
+            ? KnowledgeSourceStatus.READY
+            : KnowledgeSourceStatus.FAILED,
+      },
+    });
+  }
+
   async process(documentId: string) {
     let tmpFile: string | undefined;
+    let knowledgeSourceId: string | null = null;
     try {
       // Load document
       const doc = await this.loadDocument(documentId);
+      knowledgeSourceId = doc.knowledgeSourceId;
 
       // Download document
       tmpFile = await this.downloadDocument(doc);
@@ -75,15 +94,13 @@ export class DocumentsService {
       let extractedContent: ExtractedDocument;
       switch (doc.mimeType) {
         case MIME_TYPES.PDF:
-          extractedContent = await this.extractionService.extractPdfText(tmpFile);
+          extractedContent =
+            await this.extractionService.extractPdfText(tmpFile);
           break;
         // TODO: Add support for other MIME types
         default:
           this.logger.error(`Unsupported MIME type: ${doc.mimeType}`);
-          await this.prisma.document.update({
-            where: { id: documentId },
-            data: { status: DocumentStatus.FAILED },
-          });
+          await this.updateKnowledgeSourceStatus(knowledgeSourceId, "failed");
           throw new Error(`Unsupported MIME type: ${doc.mimeType}`);
       }
 
@@ -94,19 +111,19 @@ export class DocumentsService {
       const embeddedChunks = await this.embedService.embedChunks(chunks);
 
       // Store embeddings
-      await this.vectorStoreService.store(embeddedChunks, documentId);
+      await this.vectorStoreService.store(embeddedChunks, knowledgeSourceId);
 
-      await this.prisma.document.update({
-        where: { id: documentId },
-        data: { status: DocumentStatus.READY },
-      });
+      // Mark the knowledge source as ready
+      await this.updateKnowledgeSourceStatus(knowledgeSourceId, "success");
+
+      // just log the success
+      this.logger.log(`Processed document ${documentId} successfully`);
     } catch (error) {
       console.log(error);
       this.logger.error(`Error processing document ${documentId}: ${error}`);
-      await this.prisma.document.update({
-        where: { id: documentId },
-        data: { status: DocumentStatus.FAILED },
-      });
+      if (knowledgeSourceId) {
+        await this.updateKnowledgeSourceStatus(knowledgeSourceId, "failed");
+      }
       throw error;
     } finally {
       if (tmpFile) {

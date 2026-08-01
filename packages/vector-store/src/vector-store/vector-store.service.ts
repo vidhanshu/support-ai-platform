@@ -10,7 +10,7 @@ export class VectorStoreService {
     return `[${vector.join(",")}]`;
   }
 
-  async store(embeddedChunks: EmbeddedChunk[], documentId: string) {
+  async store(embeddedChunks: EmbeddedChunk[], knowledgeSourceId: string) {
     if (embeddedChunks.length === 0) {
       return;
     }
@@ -23,7 +23,7 @@ export class VectorStoreService {
         ${this.vectorToSql(chunk.embedding)}::vector,
         ${chunk.tokenCount},
         ${chunk.metadata ? JSON.stringify(chunk.metadata) : null},
-        ${documentId},
+        ${knowledgeSourceId},
         NOW(),
         NOW()
       )`,
@@ -31,7 +31,7 @@ export class VectorStoreService {
 
     return this.prisma.$executeRaw`
       INSERT INTO "Chunk"
-      ("id","text","chunkIndex","embedding","tokenCount","metadata","documentId","createdAt","updatedAt")
+      ("id","text","chunkIndex","embedding","tokenCount","metadata","knowledgeSourceId","createdAt","updatedAt")
       VALUES ${Prisma.join(values)}
     `;
   }

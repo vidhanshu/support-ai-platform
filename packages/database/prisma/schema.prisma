@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider   = "postgresql"
   extensions = [vector]
 }
 
@@ -22,10 +22,17 @@ enum MessageRole {
   SYSTEM
 }
 
-enum DocumentStatus {
-  UPLOADING
+enum KnowledgeSourceType {
+  DOCUMENT
+  QNA
+  WEBSITE
+  NOTION
+  TICKET
+}
+
+enum KnowledgeSourceStatus {
+  PENDING
   PROCESSING
-  PROCESSED
   READY
   FAILED
 }
@@ -38,12 +45,19 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  memberships   WorkspaceMember[]
-  refreshTokens RefreshToken[]        @relation("UserRefreshTokens")
-  invitations   WorkspaceInvitation[]
-  agents        Agent[]
+  memberships                WorkspaceMember[]
+  refreshTokens              RefreshToken[]         @relation("UserRefreshTokens")
+  invitations                WorkspaceInvitation[]
+  agents                     Agent[]
+  knowledgeSourceAttachments AgentKnowledgeSource[]
 
   @@index([email])
+}
+
+enum UploadStatus {
+  UPLOADING
+  COMPLETED
+  FAILED
 }
 
 model RefreshToken {
@@ -58,20 +72,23 @@ model RefreshToken {
   updatedAt DateTime @updatedAt
 
   user User @relation("UserRefreshTokens", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Workspace {
-  id        String   @id @default(uuid())
-  name      String
-  slug      String   @unique
+  id   String @id @default(uuid())
+  name String
+  slug String @unique
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members       WorkspaceMember[]
-  agents        Agent[]
-  documents     Document[]
-  conversations Conversation[]
-  invitations   WorkspaceInvitation[]
+  members          WorkspaceMember[]
+  agents           Agent[]
+  knowledgeSources KnowledgeSource[]
+  conversations    Conversation[]
+  invitations      WorkspaceInvitation[]
 
   @@index([slug])
 }
@@ -125,33 +142,79 @@ model Agent {
   updatedAt    DateTime @updatedAt
   model        String?  @default("gpt-4.1-mini")
   temperature  Float?   @default(0.2)
-  createdBy    User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdBy    User     @relation(fields: [createdById], references: [id], onDelete: Restrict)
   createdById  String
 
-  workspace     Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  documents     AgentDocument[]
-  conversations Conversation[]
+  workspace        Workspace              @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  conversations    Conversation[]
+  knowledgeSources AgentKnowledgeSource[]
+
+  @@index([workspaceId])
+  @@index([createdById])
+}
+
+// many-to-many relationship between Agents and KnowledgeSources
+model AgentKnowledgeSource {
+  id String @id @default(uuid())
+
+  knowledgeSourceId String
+  agentId           String
+
+  agent           Agent           @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  knowledgeSource KnowledgeSource @relation(fields: [knowledgeSourceId], references: [id], onDelete: Cascade)
+
+  attachedById String
+  attachedBy   User   @relation(fields: [attachedById], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([agentId, knowledgeSourceId])
+  @@index([agentId])
+  @@index([knowledgeSourceId])
+  @@index([attachedById])
+}
+
+model KnowledgeSource {
+  id String @id @default(uuid())
+
+  type   KnowledgeSourceType
+  status KnowledgeSourceStatus @default(PENDING)
+
+  name String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  metadata  Json?
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  agents   AgentKnowledgeSource[]
+  document Document?
+
+  // TODO: Add QnA and website support
+  // qna QnA?
+  // website Website?
+
+  chunks Chunk[]
 
   @@index([workspaceId])
 }
 
 model Document {
-  id        String         @id @default(cuid())
-  name      String
-  objectKey String
-  mimeType  String
-  size      Int
-  status    DocumentStatus @default(UPLOADING)
+  id               String       @id @default(uuid())
+  originalFilename String
+  objectKey        String       @unique
+  mimeType         String
+  size             Int
+  uploadStatus     UploadStatus @default(UPLOADING)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  workspaceId String
-  workspace   Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  agents      AgentDocument[]
-  chunks      Chunk[]
-
-  @@index([workspaceId])
+  knowledgeSourceId String          @unique
+  knowledgeSource   KnowledgeSource @relation(fields: [knowledgeSourceId], references: [id], onDelete: Cascade)
 }
 
 model Chunk {
@@ -164,23 +227,10 @@ model Chunk {
   tokenCount Int                        @default(0)
   metadata   Json?
 
-  documentId String?
-  document   Document? @relation(fields: [documentId], references: [id], onDelete: Cascade)
-}
+  knowledgeSourceId String
+  knowledgeSource   KnowledgeSource @relation(fields: [knowledgeSourceId], references: [id], onDelete: Cascade)
 
-// AgentDocument is a many-to-many relationship between Agents and Documents
-model AgentDocument {
-  id         String   @id @default(uuid())
-  agentId    String
-  documentId String
-  createdAt  DateTime @default(now())
-
-  agent    Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
-
-  @@unique([agentId, documentId])
-  @@index([agentId])
-  @@index([documentId])
+  @@index([knowledgeSourceId])
 }
 
 model Conversation {
