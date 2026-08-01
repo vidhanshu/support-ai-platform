@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { CreateAgentDto } from "./dto/create-agent.dto";
 import { UpdateAgentDto } from "./dto/update-agent.dto";
 import { WorkspaceContext } from "../common/interfaces/request.interface";
@@ -39,6 +43,17 @@ export class AgentsService {
       where: {
         id,
       },
+      include: {
+        knowledgeSources: {
+          include: {
+            knowledgeSource: {
+              include: {
+                document: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     if (!agent || agent.workspaceId !== workspace.id) {
@@ -66,6 +81,87 @@ export class AgentsService {
 
     return this.prisma.agent.delete({
       where: { id },
+    });
+  }
+
+  async attachKnowledgeSource(
+    workspace: WorkspaceContext,
+    user: JwtUser,
+    agentId: string,
+    knowledgeSourceId: string,
+  ) {
+    const knowledgeSource = await this.prisma.knowledgeSource.findUnique({
+      where: {
+        id: knowledgeSourceId,
+      },
+    });
+
+    if (!knowledgeSource || knowledgeSource.workspaceId !== workspace.id) {
+      throw new NotFoundException("Knowledge source not found");
+    }
+
+    const agent = await this.findOne(workspace, agentId);
+
+    const agentKnowledgeSource =
+      await this.prisma.agentKnowledgeSource.findUnique({
+        where: {
+          agentId_knowledgeSourceId: {
+            agentId,
+            knowledgeSourceId,
+          },
+        },
+      });
+
+    if (agentKnowledgeSource) {
+      throw new BadRequestException(
+        "Knowledge source already attached to agent",
+      );
+    }
+
+    return this.prisma.agentKnowledgeSource.create({
+      data: {
+        agentId: agent.id,
+        knowledgeSourceId: knowledgeSource.id,
+        attachedById: user.id,
+      },
+    });
+  }
+
+  async detachKnowledgeSource(
+    workspace: WorkspaceContext,
+    agentId: string,
+    knowledgeSourceId: string,
+  ) {
+    const agentKnowledgeSource =
+      await this.prisma.agentKnowledgeSource.findUnique({
+        where: {
+          agentId_knowledgeSourceId: {
+            agentId,
+            knowledgeSourceId,
+          },
+        },
+        include: {
+          agent: {
+            select: { workspaceId: true },
+          },
+          knowledgeSource: {
+            select: { workspaceId: true },
+          },
+        },
+      });
+
+    if (
+      !agentKnowledgeSource ||
+      agentKnowledgeSource.agent.workspaceId !== workspace.id ||
+      agentKnowledgeSource.knowledgeSource.workspaceId !== workspace.id
+    ) {
+      throw new NotFoundException("Agent knowledge source not found");
+    }
+
+    return this.prisma.agentKnowledgeSource.delete({
+      where: {
+        id: agentKnowledgeSource.id,
+      },
     });
   }
 }

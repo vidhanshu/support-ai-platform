@@ -63,4 +63,34 @@ export class AgentsController {
   ) {
     return this.agentsService.remove(workspace, id);
   }
+
+  @Post(":id/attach-knowledge-source/:knowledgeSourceId")
+  @WorkspaceRoles(WorkspaceRole.ADMIN, WorkspaceRole.OWNER)
+  attachKnowledgeSource(
+    @Param("id") id: string,
+    @Param("knowledgeSourceId") knowledgeSourceId: string,
+    @CurrentWorkspace() workspace: WorkspaceContext,
+    @CurrentUser() user: JwtUser,
+  ) {
+    return this.agentsService.attachKnowledgeSource(
+      workspace,
+      user,
+      id,
+      knowledgeSourceId,
+    );
+  }
+
+  @Delete(":id/detach-knowledge-source/:knowledgeSourceId")
+  @WorkspaceRoles(WorkspaceRole.ADMIN, WorkspaceRole.OWNER)
+  detachKnowledgeSource(
+    @Param("id") id: string,
+    @Param("knowledgeSourceId") knowledgeSourceId: string,
+    @CurrentWorkspace() workspace: WorkspaceContext,
+  ) {
+    return this.agentsService.detachKnowledgeSource(
+      workspace,
+      id,
+      knowledgeSourceId,
+    );
+  }
 }
