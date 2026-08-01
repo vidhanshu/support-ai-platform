@@ -1,5 +1,5 @@
 import { Controller, Get, Param, Delete } from "@nestjs/common";
-import { KnowledgeService } from "./knowledge.service";
+import { KnowledgeSourcesService } from "./knowledge-sources.service";
 import { RequireWorkspace } from "../common/decorators/workspace-protected.decorator";
 import type { WorkspaceContext } from "../common/interfaces/request.interface";
 import { CurrentWorkspace } from "../workspace/decorators/current-workspace.decorator";
@@ -8,8 +8,8 @@ import { WorkspaceRole } from "@repo/database";
 
 @RequireWorkspace()
 @Controller("knowledge")
-export class KnowledgeController {
-  constructor(private readonly knowledgeService: KnowledgeService) {}
+export class KnowledgeSourcesController {
+  constructor(private readonly knowledgeService: KnowledgeSourcesService) {}
 
   @Get()
   findAll(@CurrentWorkspace() workspace: WorkspaceContext) {

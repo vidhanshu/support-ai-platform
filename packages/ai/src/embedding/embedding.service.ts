@@ -1,12 +1,26 @@
 import { Injectable } from "@nestjs/common";
-import ollama from "ollama";
+import { ConfigService } from "@nestjs/config";
+import { AI_CONFIGS, ENV_KEYS } from "@repo/config";
 import type { Chunk, EmbeddedChunk } from "@repo/contracts";
+import { Ollama } from "ollama";
 
 @Injectable()
 export class EmbeddingService {
+  private readonly client: Ollama;
+  private readonly model: string;
+
+  constructor(private readonly configService: ConfigService) {
+    this.client = new Ollama({
+      host: this.configService.getOrThrow(ENV_KEYS.OLLAMA_BASE_URL),
+    });
+    this.model =
+      this.configService.get(ENV_KEYS.OLLAMA_EMBED_MODEL) ??
+      AI_CONFIGS.DEFAULT_EMBED_MODEL;
+  }
+
   async embed(text: string) {
-    const result = await ollama.embeddings({
-      model: "nomic-embed-text",
+    const result = await this.client.embeddings({
+      model: this.model,
       prompt: text,
     });
     return result.embedding;

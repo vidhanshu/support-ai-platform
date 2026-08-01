@@ -13,4 +13,5 @@ export class ConversationController {
   findAll(@CurrentWorkspace() workspace: WorkspaceContext, @Param("id") id: string) {
     return this.conversationService.findAll(workspace, id);
   }
+
 }

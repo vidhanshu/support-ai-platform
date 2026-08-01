@@ -4,7 +4,7 @@ import { PrismaService } from "@repo/database";
 import { StorageService } from "@repo/storage";
 
 @Injectable()
-export class KnowledgeService {
+export class KnowledgeSourcesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storageService: StorageService,

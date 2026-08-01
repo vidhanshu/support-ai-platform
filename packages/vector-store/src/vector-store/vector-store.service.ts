@@ -36,4 +36,22 @@ export class VectorStoreService {
       VALUES ${Prisma.join(values)}
     `;
   }
+
+  async search(
+    embeddedQuery: number[],
+    knowledgeSourceIds: string[],
+    limit: number = 10,
+  ) {
+    if (knowledgeSourceIds.length === 0) {
+      return [];
+    }
+
+    return this.prisma.$queryRaw`
+      SELECT *
+      FROM "Chunk"
+      WHERE "knowledgeSourceId" IN (${Prisma.join(knowledgeSourceIds)})
+      ORDER BY "embedding" <=> ${this.vectorToSql(embeddedQuery)}::vector ASC
+      LIMIT ${limit}
+    `;
+  }
 }
