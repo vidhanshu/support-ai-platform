@@ -1,3 +1,8 @@
+/**
+ * @deprecated Prompt construction lives in @repo/ai PromptBuilder.
+ * Context formatting lives in @repo/knowledge ContextBuilder.
+ * Kept temporarily so older imports do not break mid-migration.
+ */
 export function buildRAGPrompt(
   context: string,
   systemPrompt?: string | null,
@@ -8,22 +13,14 @@ export function buildRAGPrompt(
   return `${base}
 
 Answer ONLY from the provided context.
-If multiple sections discuss the same topic, combine the information.
-If the answer is not present in the context, say you couldn't find it in the knowledge base.
-
-Always answer in markdown.
-If the user requests:
-- a table → use a markdown table
-- a list → use a markdown list
-- code → use a fenced code block
-
-Do not mention chunk numbers or internal IDs.
-When citing sources, use page numbers like (Page 109) or the document title when available.
 
 Context:
 ${context}`;
 }
 
+/**
+ * @deprecated Use ContextBuilder from @repo/knowledge instead.
+ */
 export function formatRetrievedContext(
   chunks: Array<{
     text: string;
@@ -50,18 +47,23 @@ export function formatRetrievedContext(
           ? (chunk.metadata as { pageNumber: number }).pageNumber
           : undefined);
 
-      const title = chunk.title?.trim();
-      const parts = [
-        title || "Source",
-        pageNumber !== undefined ? `Page ${pageNumber}` : undefined,
-      ].filter(Boolean);
-
-      const text =
+      const sourceName = chunk.title?.trim() || "Unknown source";
+      const page = pageNumber !== undefined ? String(pageNumber) : "N/A";
+      const content =
         chunk.text.length > maxChunkChars
           ? `${chunk.text.slice(0, maxChunkChars)}…`
           : chunk.text;
 
-      return `### ${parts.join(" · ")}\n${text}`;
+      return [
+        "Source:",
+        sourceName,
+        "",
+        "Page:",
+        page,
+        "",
+        "Content:",
+        content,
+      ].join("\n");
     })
-    .join("\n\n");
+    .join("\n\n---\n\n");
 }

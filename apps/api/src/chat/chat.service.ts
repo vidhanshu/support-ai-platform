@@ -1,4 +1,7 @@
-import { RetrievalService } from "@repo/knowledge";
+import {
+  ContextBuilder,
+  RetrievalService,
+} from "@repo/knowledge";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { SendMessageDto } from "./dto/send-message.dto";
 import { JwtUser } from "../auth/interfaces/jwt.interface";
@@ -9,10 +12,15 @@ import {
   MessageRole,
   PrismaService,
 } from "@repo/database";
-import { LlmService } from "@repo/ai";
+import {
+  ConversationContextBuilder,
+  DefaultCostCalculator,
+  LlmService,
+  PromptBuilder,
+  type ChatMessage,
+  type TokenUsage,
+} from "@repo/ai";
 import { AI_CONFIGS } from "@repo/config";
-import { buildRAGPrompt, formatRetrievedContext } from "@repo/utils";
-import type { ChatMessage } from "@repo/ai";
 
 export type ChatSource = {
   id: string;
@@ -24,6 +32,18 @@ export type ChatSource = {
   metadata?: { pageNumber?: number } | null;
 };
 
+export type ChatPipelineTimings = {
+  loadConversationMs: number;
+  embeddingMs: number;
+  retrievalMs: number;
+  rerankingMs: number;
+  contextBuildMs: number;
+  promptBuildMs: number;
+  llmFirstTokenMs: number | null;
+  llmGenerationMs: number;
+  totalRequestMs: number;
+};
+
 export type ChatStreamEvent =
   | { type: "status"; data: { stage: string; ms?: number } }
   | {
@@ -32,7 +52,9 @@ export type ChatStreamEvent =
         chunks: number;
         knowledgeSources: number;
         candidates: number;
+        embeddingMs: number;
         retrievalMs: number;
+        rerankingMs: number;
       };
     }
   | {
@@ -49,11 +71,9 @@ export type ChatStreamEvent =
       data: {
         message: Message;
         sources: ChatSource[];
-        timings: {
-          retrievalMs: number;
-          llmMs: number;
-          totalMs: number;
-        };
+        timings: ChatPipelineTimings;
+        usage: TokenUsage;
+        estimatedCost: number | null;
       };
     }
   | { type: "error"; data: { message: string } };
@@ -64,7 +84,10 @@ type PreparedChat = {
   model: string;
   temperature: number;
   sources: ChatSource[];
-  retrievalMs: number;
+  timings: Omit<
+    ChatPipelineTimings,
+    "llmFirstTokenMs" | "llmGenerationMs" | "totalRequestMs"
+  >;
   knowledgeSourceCount: number;
   candidateCount: number;
   warning?: string;
@@ -77,7 +100,11 @@ export class ChatService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly retrievalService: RetrievalService,
+    private readonly contextBuilder: ContextBuilder,
+    private readonly conversationContextBuilder: ConversationContextBuilder,
+    private readonly promptBuilder: PromptBuilder,
     private readonly llmService: LlmService,
+    private readonly costCalculator: DefaultCostCalculator,
   ) {}
 
   async *streamMessage(
@@ -91,9 +118,7 @@ export class ChatService {
     yield { type: "status", data: { stage: "started", ms: 0 } };
     yield { type: "status", data: { stage: "retrieving" } };
 
-    const prepareStart = performance.now();
     const prepared = await this.prepareChat(workspace, agentId, dto);
-    const prepareMs = this.elapsed(prepareStart);
 
     yield {
       type: "retrieval",
@@ -101,14 +126,11 @@ export class ChatService {
         chunks: prepared.sources.length,
         knowledgeSources: prepared.knowledgeSourceCount,
         candidates: prepared.candidateCount,
-        retrievalMs: prepared.retrievalMs,
+        embeddingMs: prepared.timings.embeddingMs,
+        retrievalMs: prepared.timings.retrievalMs,
+        rerankingMs: prepared.timings.rerankingMs,
       },
     };
-
-    this.logger.log(
-      `[perf] prepare_total=${prepareMs}ms sources=${prepared.sources.length}`,
-    );
-    yield { type: "status", data: { stage: "prepare_done", ms: prepareMs } };
 
     yield {
       type: "meta",
@@ -122,39 +144,35 @@ export class ChatService {
     yield { type: "status", data: { stage: "generating" } };
 
     let assistantContent = "";
+    let usage: TokenUsage = null;
     const streamStart = performance.now();
     let firstTokenMs: number | null = null;
 
     try {
-      this.logger.log(
-        `[perf] llm_stream_start model=${prepared.model} messages=${prepared.messages.length}`,
-      );
-
-      for await (const token of this.llmService.stream({
+      for await (const part of this.llmService.stream({
         messages: prepared.messages,
         model: prepared.model,
         temperature: prepared.temperature,
         numCtx: AI_CONFIGS.NUM_CTX,
       })) {
-        if (firstTokenMs === null) {
-          firstTokenMs = this.elapsed(streamStart);
-          this.logger.log(`[perf] llm_first_token=${firstTokenMs}ms`);
-          yield {
-            type: "status",
-            data: { stage: "first_token", ms: firstTokenMs },
-          };
+        if (part.type === "token") {
+          if (firstTokenMs === null) {
+            firstTokenMs = this.elapsed(streamStart);
+            yield {
+              type: "status",
+              data: { stage: "first_token", ms: firstTokenMs },
+            };
+          }
+          assistantContent += part.content;
+          yield { type: "token", data: { content: part.content } };
+          continue;
         }
 
-        assistantContent += token;
-        yield { type: "token", data: { content: token } };
+        usage = part.usage;
       }
 
-      const llmMs = this.elapsed(streamStart);
-      this.logger.log(
-        `[perf] llm_stream_total=${llmMs}ms responseLength=${assistantContent.length}`,
-      );
+      const llmGenerationMs = this.elapsed(streamStart);
 
-      const saveStart = performance.now();
       const assistantMessage = await this.prismaService.message.create({
         data: {
           role: MessageRole.ASSISTANT,
@@ -162,28 +180,49 @@ export class ChatService {
           conversationId: prepared.conversation.id,
         },
       });
-      this.logger.log(`[perf] save_assistant=${this.elapsed(saveStart)}ms`);
 
-      const totalMs = this.elapsed(totalStart);
-      this.logger.log(
-        `[perf] summary total=${totalMs}ms prepare=${prepareMs}ms retrieval=${prepared.retrievalMs}ms llm_first_token=${firstTokenMs ?? -1}ms llm_stream=${llmMs}ms`,
-      );
+      const totalRequestMs = this.elapsed(totalStart);
+      const timings: ChatPipelineTimings = {
+        ...prepared.timings,
+        llmFirstTokenMs: firstTokenMs,
+        llmGenerationMs,
+        totalRequestMs,
+      };
+
+      const estimatedCost = this.costCalculator.estimate({
+        provider: "ollama",
+        model: prepared.model,
+        usage,
+      });
+
+      this.logger.log({
+        msg: "chat.pipeline.complete",
+        conversationId: prepared.conversation.id,
+        agentId,
+        model: prepared.model,
+        timings,
+        usage,
+        estimatedCost,
+        sourceCount: prepared.sources.length,
+      });
 
       yield {
         type: "done",
         data: {
           message: assistantMessage,
           sources: prepared.sources,
-          timings: {
-            retrievalMs: prepared.retrievalMs,
-            llmMs,
-            totalMs,
-          },
+          timings,
+          usage,
+          estimatedCost,
         },
       };
     } catch (error) {
       this.logger.error(
-        `[perf] stream_failed after=${this.elapsed(totalStart)}ms`,
+        {
+          msg: "chat.pipeline.failed",
+          agentId,
+          afterMs: this.elapsed(totalStart),
+        },
         error instanceof Error ? error.stack : String(error),
       );
       yield {
@@ -203,15 +242,11 @@ export class ChatService {
   ): Promise<PreparedChat> {
     const { message, conversationId } = dto;
 
-    let stepStart = performance.now();
     const agent = await this.prismaService.agent.findFirst({
       where: { id: agentId, workspaceId: workspace.id },
     });
-    this.logger.log(`[perf] load_agent=${this.elapsed(stepStart)}ms`);
-
     if (!agent) throw new NotFoundException("Agent not found");
 
-    stepStart = performance.now();
     let conversation: Conversation | null = null;
     if (!conversationId) {
       conversation = await this.prismaService.conversation.create({
@@ -230,85 +265,60 @@ export class ChatService {
         },
       });
     }
-    this.logger.log(
-      `[perf] load_or_create_conversation=${this.elapsed(stepStart)}ms`,
-    );
-
     if (!conversation) throw new NotFoundException("Conversation not found");
 
-    stepStart = performance.now();
-    await this.prismaService.message.create({
+    const userMessage = await this.prismaService.message.create({
       data: {
         role: MessageRole.USER,
         content: message,
         conversationId: conversation.id,
       },
     });
-    this.logger.log(`[perf] save_user_message=${this.elapsed(stepStart)}ms`);
+
+    const historyResult = await this.conversationContextBuilder.build(
+      conversation.id,
+      { excludeMessageId: userMessage.id },
+    );
 
     const retrieval = await this.retrievalService.retrieve(agentId, message);
-    this.logger.log(
-      `[perf] retrieval_total=${retrieval.retrievalMs}ms chunks=${retrieval.chunks.length}`,
-    );
 
-    stepStart = performance.now();
-    const context = formatRetrievedContext(
+    const { context, contextBuildMs } = this.contextBuilder.build(
       retrieval.chunks,
-      AI_CONFIGS.MAX_CHUNK_CHARS,
     );
 
-    const messages: ChatMessage[] = [
-      {
-        role: "system",
-        content: buildRAGPrompt(context, agent.systemPrompt),
-      },
-      {
-        role: "user",
-        content: message,
-      },
-    ];
-
-    const promptChars = messages.reduce((sum, m) => sum + m.content.length, 0);
-    this.logger.log(
-      `[perf] build_prompt=${this.elapsed(stepStart)}ms contextChars=${context.length} promptChars=${promptChars} messages=${messages.length}`,
-    );
-
-    const sources = this.toSources(retrieval.chunks);
-    this.logger.log(`[perf] sources_ready count=${sources.length}`);
+    const { messages, promptBuildMs } = this.promptBuilder.build({
+      systemPrompt: agent.systemPrompt,
+      history: historyResult.messages,
+      retrievedContext: context,
+      userMessage: message,
+    });
 
     return {
       conversation,
       messages,
       model: agent.model ?? AI_CONFIGS.DEFAULT_CHAT_MODEL,
       temperature: agent.temperature ?? AI_CONFIGS.DEFAULT_TEMPERATURE,
-      sources,
-      retrievalMs: retrieval.retrievalMs,
+      sources: retrieval.chunks.map((chunk) => ({
+        id: chunk.id,
+        text: chunk.text,
+        knowledgeSourceId: chunk.knowledgeSourceId,
+        pageNumber: chunk.pageNumber,
+        title: chunk.title,
+        score: chunk.score,
+        metadata: chunk.metadata ?? null,
+      })),
+      timings: {
+        loadConversationMs: historyResult.loadConversationMs,
+        embeddingMs: retrieval.timings.embeddingMs,
+        retrievalMs: retrieval.timings.retrievalMs,
+        rerankingMs: retrieval.timings.rerankingMs,
+        contextBuildMs,
+        promptBuildMs,
+      },
       knowledgeSourceCount: retrieval.knowledgeSourceCount,
       candidateCount: retrieval.candidateCount,
       warning: retrieval.warning,
     };
-  }
-
-  private toSources(
-    chunks: Array<{
-      id: string;
-      text: string;
-      knowledgeSourceId: string;
-      pageNumber?: number;
-      title?: string;
-      score: number;
-      metadata?: { pageNumber?: number } | null;
-    }>,
-  ): ChatSource[] {
-    return chunks.map((chunk) => ({
-      id: chunk.id,
-      text: chunk.text,
-      knowledgeSourceId: chunk.knowledgeSourceId,
-      pageNumber: chunk.pageNumber,
-      title: chunk.title,
-      score: chunk.score,
-      metadata: chunk.metadata ?? null,
-    }));
   }
 
   private elapsed(start: number) {

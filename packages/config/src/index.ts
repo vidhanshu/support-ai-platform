@@ -43,8 +43,8 @@ export const AI_CONFIGS = {
   DEFAULT_CHAT_MODEL: "llama3.1",
   DEFAULT_EMBED_MODEL: "nomic-embed-text",
   DEFAULT_TEMPERATURE: 0.2,
-  /** Unused for RAG prompt today (history is not sent to the LLM) */
-  MAX_CONTEXT_MESSAGES: 6,
+  /** Recent conversation turns sent to the LLM (excluding current user message) */
+  MAX_CONTEXT_MESSAGES: 8,
   /** Final chunks sent to the LLM after dedupe + MMR */
   RETRIEVAL_TOP_K: 5,
   /** Initial vector search pool before dedupe/MMR */

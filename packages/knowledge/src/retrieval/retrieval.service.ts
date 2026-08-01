@@ -10,11 +10,18 @@ import type {
 } from "@repo/contracts";
 import { applyMmr } from "./mmr";
 
+export type RetrievalTimings = {
+  embeddingMs: number;
+  retrievalMs: number;
+  rerankingMs: number;
+  totalMs: number;
+};
+
 export type RetrievalResult = {
   chunks: RetrievedChunk[];
   knowledgeSourceCount: number;
   candidateCount: number;
-  retrievalMs: number;
+  timings: RetrievalTimings;
   warning?: string;
 };
 
@@ -34,9 +41,11 @@ export class RetrievalService {
     limit: number = AI_CONFIGS.RETRIEVAL_TOP_K,
   ): Promise<RetrievalResult> {
     const totalStart = performance.now();
+    let embeddingMs = 0;
+    let retrievalMs = 0;
+    let rerankingMs = 0;
 
     try {
-      let stepStart = performance.now();
       const attachments = await this.prisma.agentKnowledgeSource.findMany({
         where: {
           agentId,
@@ -67,10 +76,6 @@ export class RetrievalService {
         }),
       );
 
-      this.logger.log(
-        `[perf] retrieval.load_sources=${this.elapsed(stepStart)}ms count=${knowledgeSourceIds.length}`,
-      );
-
       if (knowledgeSourceIds.length === 0) {
         this.logger.warn(
           `[retrieval] agent ${agentId} has no attached knowledge sources`,
@@ -79,17 +84,20 @@ export class RetrievalService {
           chunks: [],
           knowledgeSourceCount: 0,
           candidateCount: 0,
-          retrievalMs: this.elapsed(totalStart),
+          timings: {
+            embeddingMs: 0,
+            retrievalMs: 0,
+            rerankingMs: 0,
+            totalMs: this.elapsed(totalStart),
+          },
           warning:
             "No knowledge sources attached to this agent. Attach one before chatting.",
         };
       }
 
-      stepStart = performance.now();
+      let stepStart = performance.now();
       const embeddedQuery = await this.embeddingService.embed(query);
-      this.logger.log(
-        `[perf] retrieval.embed_query=${this.elapsed(stepStart)}ms dims=${embeddedQuery.length}`,
-      );
+      embeddingMs = this.elapsed(stepStart);
 
       stepStart = performance.now();
       const hits = await this.vectorStoreService.search(
@@ -97,10 +105,9 @@ export class RetrievalService {
         knowledgeSourceIds,
         AI_CONFIGS.RETRIEVAL_CANDIDATE_K,
       );
-      this.logger.log(
-        `[perf] retrieval.vector_search=${this.elapsed(stepStart)}ms candidates=${hits.length}`,
-      );
+      retrievalMs = this.elapsed(stepStart);
 
+      stepStart = performance.now();
       const scored: RetrievedChunk[] = hits.map((hit) => {
         const metadata = this.asChunkMetadata(hit.metadata);
         return {
@@ -116,33 +123,41 @@ export class RetrievalService {
       });
 
       const deduped = this.dedupeChunks(scored);
-      const selected = applyMmr(
-        deduped,
-        limit,
-        AI_CONFIGS.MMR_LAMBDA,
-      );
+      const selected = applyMmr(deduped, limit, AI_CONFIGS.MMR_LAMBDA);
+      rerankingMs = this.elapsed(stepStart);
 
-      const retrievalMs = this.elapsed(totalStart);
-      this.logger.log(
-        `[perf] retrieval.total=${retrievalMs}ms candidates=${hits.length} deduped=${deduped.length} selected=${selected.length}`,
-      );
+      const totalMs = this.elapsed(totalStart);
+      this.logger.log({
+        msg: "retrieval.complete",
+        embeddingMs,
+        retrievalMs,
+        rerankingMs,
+        totalMs,
+        candidates: hits.length,
+        deduped: deduped.length,
+        selected: selected.length,
+      });
 
       return {
         chunks: selected,
         knowledgeSourceCount: knowledgeSourceIds.length,
         candidateCount: hits.length,
-        retrievalMs,
+        timings: {
+          embeddingMs,
+          retrievalMs,
+          rerankingMs,
+          totalMs,
+        },
       };
     } catch (error) {
       this.logger.error(
-        `[perf] retrieval.failed after=${this.elapsed(totalStart)}ms`,
+        `[retrieval] failed after=${this.elapsed(totalStart)}ms`,
         error instanceof Error ? error.stack : String(error),
       );
       throw error;
     }
   }
 
-  /** Keep highest-scoring chunk per source+page (or source+chunkIndex). */
   private dedupeChunks(chunks: RetrievedChunk[]): RetrievedChunk[] {
     const bestByKey = new Map<string, RetrievedChunk>();
 
@@ -163,7 +178,6 @@ export class RetrievalService {
 
   private distanceToScore(distance: number): number {
     if (!Number.isFinite(distance)) return 0;
-    // pgvector cosine distance ≈ 1 - cosine_similarity
     return Math.max(0, Math.min(1, Number((1 - distance).toFixed(4))));
   }
 

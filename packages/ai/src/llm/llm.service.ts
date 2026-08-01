@@ -1,5 +1,10 @@
 import { Inject, Injectable } from "@nestjs/common";
-import type { LLMGenerateOptions, LLMProvider } from "./llm.types";
+import type {
+  LLMGenerateOptions,
+  LLMGenerateResult,
+  LLMProvider,
+  LLMStreamPart,
+} from "./llm.types";
 import { LLM_PROVIDER } from "./llm.constants";
 
 @Injectable()
@@ -8,11 +13,11 @@ export class LlmService {
     @Inject(LLM_PROVIDER) private readonly provider: LLMProvider,
   ) {}
 
-  generate(options: LLMGenerateOptions) {
+  generate(options: LLMGenerateOptions): Promise<LLMGenerateResult> {
     return this.provider.generate(options);
   }
 
-  stream(options: LLMGenerateOptions) {
+  stream(options: LLMGenerateOptions): AsyncIterable<LLMStreamPart> {
     return this.provider.stream(options);
   }
 }
