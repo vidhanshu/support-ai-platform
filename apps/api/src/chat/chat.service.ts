@@ -17,12 +17,24 @@ import type { ChatMessage } from "@repo/ai";
 export type ChatSource = {
   id: string;
   text: string;
-  metadata: unknown;
   knowledgeSourceId: string;
+  pageNumber?: number;
+  title?: string;
+  score: number;
+  metadata?: { pageNumber?: number } | null;
 };
 
 export type ChatStreamEvent =
   | { type: "status"; data: { stage: string; ms?: number } }
+  | {
+      type: "retrieval";
+      data: {
+        chunks: number;
+        knowledgeSources: number;
+        candidates: number;
+        retrievalMs: number;
+      };
+    }
   | {
       type: "meta";
       data: {
@@ -34,7 +46,15 @@ export type ChatStreamEvent =
   | { type: "token"; data: { content: string } }
   | {
       type: "done";
-      data: { message: Message; sources: ChatSource[] };
+      data: {
+        message: Message;
+        sources: ChatSource[];
+        timings: {
+          retrievalMs: number;
+          llmMs: number;
+          totalMs: number;
+        };
+      };
     }
   | { type: "error"; data: { message: string } };
 
@@ -44,6 +64,9 @@ type PreparedChat = {
   model: string;
   temperature: number;
   sources: ChatSource[];
+  retrievalMs: number;
+  knowledgeSourceCount: number;
+  candidateCount: number;
   warning?: string;
 };
 
@@ -66,10 +89,22 @@ export class ChatService {
     const totalStart = performance.now();
 
     yield { type: "status", data: { stage: "started", ms: 0 } };
+    yield { type: "status", data: { stage: "retrieving" } };
 
     const prepareStart = performance.now();
     const prepared = await this.prepareChat(workspace, agentId, dto);
     const prepareMs = this.elapsed(prepareStart);
+
+    yield {
+      type: "retrieval",
+      data: {
+        chunks: prepared.sources.length,
+        knowledgeSources: prepared.knowledgeSourceCount,
+        candidates: prepared.candidateCount,
+        retrievalMs: prepared.retrievalMs,
+      },
+    };
+
     this.logger.log(
       `[perf] prepare_total=${prepareMs}ms sources=${prepared.sources.length}`,
     );
@@ -83,6 +118,8 @@ export class ChatService {
         ...(prepared.warning ? { warning: prepared.warning } : {}),
       },
     };
+
+    yield { type: "status", data: { stage: "generating" } };
 
     let assistantContent = "";
     const streamStart = performance.now();
@@ -112,9 +149,9 @@ export class ChatService {
         yield { type: "token", data: { content: token } };
       }
 
-      const streamMs = this.elapsed(streamStart);
+      const llmMs = this.elapsed(streamStart);
       this.logger.log(
-        `[perf] llm_stream_total=${streamMs}ms responseLength=${assistantContent.length}`,
+        `[perf] llm_stream_total=${llmMs}ms responseLength=${assistantContent.length}`,
       );
 
       const saveStart = performance.now();
@@ -127,8 +164,9 @@ export class ChatService {
       });
       this.logger.log(`[perf] save_assistant=${this.elapsed(saveStart)}ms`);
 
+      const totalMs = this.elapsed(totalStart);
       this.logger.log(
-        `[perf] summary total=${this.elapsed(totalStart)}ms prepare=${prepareMs}ms llm_first_token=${firstTokenMs ?? -1}ms llm_stream=${streamMs}ms`,
+        `[perf] summary total=${totalMs}ms prepare=${prepareMs}ms retrieval=${prepared.retrievalMs}ms llm_first_token=${firstTokenMs ?? -1}ms llm_stream=${llmMs}ms`,
       );
 
       yield {
@@ -136,6 +174,11 @@ export class ChatService {
         data: {
           message: assistantMessage,
           sources: prepared.sources,
+          timings: {
+            retrievalMs: prepared.retrievalMs,
+            llmMs,
+            totalMs,
+          },
         },
       };
     } catch (error) {
@@ -203,20 +246,17 @@ export class ChatService {
     });
     this.logger.log(`[perf] save_user_message=${this.elapsed(stepStart)}ms`);
 
-    stepStart = performance.now();
-    const { chunks: relevantChunks, warning } =
-      await this.retrievalService.retrieve(agentId, message);
+    const retrieval = await this.retrievalService.retrieve(agentId, message);
     this.logger.log(
-      `[perf] retrieval_total=${this.elapsed(stepStart)}ms chunks=${relevantChunks.length}`,
+      `[perf] retrieval_total=${retrieval.retrievalMs}ms chunks=${retrieval.chunks.length}`,
     );
 
     stepStart = performance.now();
     const context = formatRetrievedContext(
-      relevantChunks,
+      retrieval.chunks,
       AI_CONFIGS.MAX_CHUNK_CHARS,
     );
 
-    // Only retrieved chunks + current question — no conversation history
     const messages: ChatMessage[] = [
       {
         role: "system",
@@ -233,7 +273,7 @@ export class ChatService {
       `[perf] build_prompt=${this.elapsed(stepStart)}ms contextChars=${context.length} promptChars=${promptChars} messages=${messages.length}`,
     );
 
-    const sources = this.toSources(relevantChunks);
+    const sources = this.toSources(retrieval.chunks);
     this.logger.log(`[perf] sources_ready count=${sources.length}`);
 
     return {
@@ -242,7 +282,10 @@ export class ChatService {
       model: agent.model ?? AI_CONFIGS.DEFAULT_CHAT_MODEL,
       temperature: agent.temperature ?? AI_CONFIGS.DEFAULT_TEMPERATURE,
       sources,
-      warning,
+      retrievalMs: retrieval.retrievalMs,
+      knowledgeSourceCount: retrieval.knowledgeSourceCount,
+      candidateCount: retrieval.candidateCount,
+      warning: retrieval.warning,
     };
   }
 
@@ -250,15 +293,21 @@ export class ChatService {
     chunks: Array<{
       id: string;
       text: string;
-      metadata?: unknown;
       knowledgeSourceId: string;
+      pageNumber?: number;
+      title?: string;
+      score: number;
+      metadata?: { pageNumber?: number } | null;
     }>,
   ): ChatSource[] {
     return chunks.map((chunk) => ({
       id: chunk.id,
       text: chunk.text,
-      metadata: chunk.metadata ?? null,
       knowledgeSourceId: chunk.knowledgeSourceId,
+      pageNumber: chunk.pageNumber,
+      title: chunk.title,
+      score: chunk.score,
+      metadata: chunk.metadata ?? null,
     }));
   }
 

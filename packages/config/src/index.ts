@@ -45,8 +45,12 @@ export const AI_CONFIGS = {
   DEFAULT_TEMPERATURE: 0.2,
   /** Unused for RAG prompt today (history is not sent to the LLM) */
   MAX_CONTEXT_MESSAGES: 6,
-  /** More chunks = better recall; larger prompts also mean slower CPU prefill */
+  /** Final chunks sent to the LLM after dedupe + MMR */
   RETRIEVAL_TOP_K: 5,
+  /** Initial vector search pool before dedupe/MMR */
+  RETRIEVAL_CANDIDATE_K: 20,
+  /** MMR: 1 = pure relevance, 0 = pure diversity */
+  MMR_LAMBDA: 0.7,
   MAX_CHUNK_CHARS: 1000,
   /** Must be large enough to fit system prompt + retrieved chunks */
   NUM_CTX: 4096,

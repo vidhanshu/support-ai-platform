@@ -33,3 +33,16 @@ export interface EmbeddedChunk extends Chunk {
   embedding: number[];
   tokenCount: number;
 }
+
+/** Chunk returned from retrieval for prompting + citations */
+export interface RetrievedChunk {
+  id: string;
+  text: string;
+  chunkIndex: number;
+  knowledgeSourceId: string;
+  /** Cosine similarity in [0, 1] (higher is better) */
+  score: number;
+  pageNumber?: number;
+  title?: string;
+  metadata?: ChunkMetadata | null;
+}

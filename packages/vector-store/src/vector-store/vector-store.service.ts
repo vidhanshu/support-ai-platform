@@ -3,6 +3,17 @@ import { Injectable } from "@nestjs/common";
 import { Prisma, PrismaService } from "@repo/database";
 import type { EmbeddedChunk } from "@repo/contracts";
 
+export type VectorSearchHit = {
+  id: string;
+  text: string;
+  chunkIndex: number;
+  tokenCount: number;
+  metadata: unknown;
+  knowledgeSourceId: string;
+  /** Cosine distance from pgvector `<=>` (lower is better) */
+  distance: number;
+};
+
 @Injectable()
 export class VectorStoreService {
   constructor(private readonly prisma: PrismaService) {}
@@ -41,23 +52,14 @@ export class VectorStoreService {
     embeddedQuery: number[],
     knowledgeSourceIds: string[],
     limit: number = 10,
-  ) {
+  ): Promise<VectorSearchHit[]> {
     if (knowledgeSourceIds.length === 0) {
       return [];
     }
 
-    return this.prisma.$queryRaw<
-      Array<{
-        id: string;
-        text: string;
-        chunkIndex: number;
-        tokenCount: number;
-        metadata: unknown;
-        knowledgeSourceId: string;
-        createdAt: Date;
-        updatedAt: Date;
-      }>
-    >`
+    const queryVector = this.vectorToSql(embeddedQuery);
+
+    return this.prisma.$queryRaw<VectorSearchHit[]>`
       SELECT
         "id",
         "text",
@@ -65,11 +67,10 @@ export class VectorStoreService {
         "tokenCount",
         "metadata",
         "knowledgeSourceId",
-        "createdAt",
-        "updatedAt"
+        ("embedding" <=> ${queryVector}::vector) AS "distance"
       FROM "Chunk"
       WHERE "knowledgeSourceId" IN (${Prisma.join(knowledgeSourceIds)})
-      ORDER BY "embedding" <=> ${this.vectorToSql(embeddedQuery)}::vector ASC
+      ORDER BY "distance" ASC
       LIMIT ${limit}
     `;
   }
