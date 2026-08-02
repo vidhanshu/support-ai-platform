@@ -35,6 +35,7 @@ export default function HomePage() {
         </p>
       </div>
 
+      <Button>Click me</Button>
       <div className="space-y-3">
         <p className="text-sm text-neutral-500">API health</p>
         {healthQuery.isLoading ? (
