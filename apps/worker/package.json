@@ -17,6 +17,7 @@
     "@nestjs/platform-express": "^11.1.3",
     "@repo/config": "workspace:*",
     "@repo/database": "workspace:*",
+    "@repo/email": "workspace:*",
     "@repo/storage": "workspace:*",
     "@repo/contracts": "workspace:*",
     "@repo/knowledge": "workspace:*",

@@ -37,6 +37,9 @@ export const ENV_KEYS = {
   MINIO_BUCKET: "MINIO_BUCKET",
   REDIS_HOST: "REDIS_HOST",
   REDIS_PORT: "REDIS_PORT",
+  RESEND_API_KEY: "RESEND_API_KEY",
+  EMAIL_FROM: "EMAIL_FROM",
+  APP_WEB_URL: "APP_WEB_URL",
 } as const;
 
 export const AI_CONFIGS = {
@@ -71,6 +74,10 @@ export const HEADERS_KEYS = {
 
 export const INVITATION_CONFIGS = {
   EXPIRATION_DAYS: 3,
+} as const;
+
+export const EMAIL_CONFIGS = {
+  VERIFICATION_EXPIRATION_HOURS: 24,
 } as const;
 
 export const MIME_TYPES = {
@@ -124,9 +131,11 @@ export const WEBSITE_CONFIGS = {
 export const QUEUE_NAMES = {
   DOCUMENT_PROCESSING: "document-processing",
   WEBSITE_PROCESSING: "website-processing",
+  EMAIL: "email",
 } as const;
 
 export const JOB_NAMES = {
   PROCESS_DOCUMENT: "process-document",
   CRAWL_WEBSITE: "process-website",
+  SEND_EMAIL: "send-email",
 } as const;

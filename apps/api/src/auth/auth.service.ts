@@ -1,25 +1,46 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from "@nestjs/common";
 import { CreateUserDto } from "./dtos/create-user.dto";
-import { Prisma, PrismaService, type User } from "@repo/database";
+import {
+  Prisma,
+  PrismaService,
+  UserTokenType,
+  type User,
+} from "@repo/database";
 import bcrypt from "bcrypt";
 import { JsonWebTokenError, JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import dayjs from "dayjs";
-import { BCRYPT_CONFIGS, ENV_KEYS, JWT_CONFIGS } from "@repo/config";
+import {
+  BCRYPT_CONFIGS,
+  EMAIL_CONFIGS,
+  ENV_KEYS,
+  JOB_NAMES,
+  JWT_CONFIGS,
+  QUEUE_NAMES,
+} from "@repo/config";
 import { LoginDto } from "./dtos/login.dto";
 import { RefreshDto } from "./dtos/refresh.dto";
 import type { JwtRefreshPayload, JwtUser } from "./interfaces/jwt.interface";
+import { InjectQueue } from "@nestjs/bullmq";
+import type { Queue } from "bullmq";
+import type { EmailJobPayload } from "@repo/email";
+import * as crypto from "crypto";
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    @InjectQueue(QUEUE_NAMES.EMAIL)
+    private readonly emailQueue: Queue<EmailJobPayload>,
   ) {}
 
   private async createUserRecord(dto: CreateUserDto): Promise<User> {
@@ -154,11 +175,120 @@ export class AuthService {
     });
   }
 
-  async createUser(dto: CreateUserDto) {
-    const user = await this.createUserRecord(dto);
+  private async enqueueVerificationEmail(user: User) {
+    await this.prisma.userToken.deleteMany({
+      where: {
+        userId: user.id,
+        type: UserTokenType.EMAIL_VERIFICATION,
+      },
+    });
 
-    const { accessToken, refreshToken } = await this.issueTokens(user);
-    return { accessToken, refreshToken };
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = dayjs()
+      .add(EMAIL_CONFIGS.VERIFICATION_EXPIRATION_HOURS, "hour")
+      .toDate();
+
+    await this.prisma.userToken.create({
+      data: {
+        userId: user.id,
+        type: UserTokenType.EMAIL_VERIFICATION,
+        token,
+        expiresAt,
+      },
+    });
+
+    const appWebUrl = this.configService.getOrThrow<string>(
+      ENV_KEYS.APP_WEB_URL,
+    );
+    const verifyUrl = `${appWebUrl.replace(/\/$/, "")}/verify-email?token=${token}`;
+
+    await this.emailQueue.add(
+      JOB_NAMES.SEND_EMAIL,
+      {
+        kind: "verification",
+        to: user.email,
+        verifyUrl,
+      },
+      {
+        attempts: 3,
+        backoff: { type: "exponential", delay: 2000 },
+        removeOnComplete: 100,
+        removeOnFail: 50,
+      },
+    );
+  }
+
+  async createUser(dto: CreateUserDto) {
+    try {
+      const user = await this.createUserRecord(dto);
+      await this.enqueueVerificationEmail(user);
+  
+      const { accessToken, refreshToken } = await this.issueTokens(user);
+      return { accessToken, refreshToken };
+    } catch (error) {
+      if (error instanceof ConflictException) {
+        throw new BadRequestException(error.message);
+      }
+
+      this.logger.error(error);
+      throw error;
+    }
+  }
+
+  async verifyEmail(token: string) {
+    const record = await this.prisma.userToken.findUnique({
+      where: { token },
+      include: { user: true },
+    });
+
+    if (!record || record.type !== UserTokenType.EMAIL_VERIFICATION) {
+      throw new BadRequestException("Invalid verification token");
+    }
+
+    if (record.usedAt || dayjs(record.expiresAt).isBefore(dayjs())) {
+      await this.prisma.userToken.delete({
+        where: { id: record.id },
+      });
+      throw new BadRequestException("Verification token expired");
+    }
+
+    if (record.user.emailVerifiedAt) {
+      await this.prisma.userToken.deleteMany({
+        where: {
+          userId: record.userId,
+          type: UserTokenType.EMAIL_VERIFICATION,
+        },
+      });
+      return { verified: true };
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: record.userId },
+        data: { emailVerifiedAt: new Date() },
+      }),
+      this.prisma.userToken.deleteMany({
+        where: {
+          userId: record.userId,
+          type: UserTokenType.EMAIL_VERIFICATION,
+        },
+      }),
+    ]);
+
+    return { verified: true };
+  }
+
+  async resendVerification(user: JwtUser) {
+    const dbUser = await this.prisma.user.findUnique({
+      where: { id: user.id },
+    });
+    if (!dbUser) throw new UnauthorizedException();
+    if (dbUser.emailVerifiedAt) {
+      throw new BadRequestException("Email is already verified");
+    }
+
+    await this.enqueueVerificationEmail(dbUser);
+    return { queued: true };
   }
 
   async login(dto: LoginDto) {

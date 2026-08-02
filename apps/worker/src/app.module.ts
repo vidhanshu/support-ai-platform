@@ -6,6 +6,7 @@ import { HealthModule } from "./modules/health/health.module";
 import { BullModule } from "@nestjs/bullmq";
 import { DocumentsModule } from './documents/documents.module';
 import { WebsitesModule } from './websites/websites.module';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -28,10 +29,14 @@ import { WebsitesModule } from './websites/websites.module';
     BullModule.registerQueue({
       name: QUEUE_NAMES.WEBSITE_PROCESSING,
     }),
+    BullModule.registerQueue({
+      name: QUEUE_NAMES.EMAIL,
+    }),
     PrismaModule,
     HealthModule,
     DocumentsModule,
     WebsitesModule,
+    EmailModule,
   ],
 })
 export class AppModule {}

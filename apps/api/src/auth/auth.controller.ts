@@ -6,6 +6,7 @@ import type { JwtUser } from "./interfaces/jwt.interface";
 import { LoginDto } from "./dtos/login.dto";
 import { RefreshDto } from "./dtos/refresh.dto";
 import { Authenticated } from "../common/decorators/authenticated.decorator";
+import { VerifyEmailDto } from "./dtos/verify-email.dto";
 
 @Controller("auth")
 export class AuthController {
@@ -14,6 +15,17 @@ export class AuthController {
   @Post("register")
   async createUser(@Body() dto: CreateUserDto) {
     return this.authService.createUser(dto);
+  }
+
+  @Post("verify-email")
+  async verifyEmail(@Body() dto: VerifyEmailDto) {
+    return this.authService.verifyEmail(dto.token);
+  }
+
+  @Post("resend-verification")
+  @Authenticated()
+  async resendVerification(@CurrentUser() user: JwtUser) {
+    return this.authService.resendVerification(user);
   }
 
   @Post("login")

@@ -10,13 +10,27 @@ import { CreateInvitationDto } from "./dto/create-invitation.dto";
 import { Prisma, PrismaService, WorkspaceRole } from "@repo/database";
 import * as crypto from "crypto";
 import dayjs from "dayjs";
-import { INVITATION_CONFIGS } from "@repo/config";
+import {
+  ENV_KEYS,
+  INVITATION_CONFIGS,
+  JOB_NAMES,
+  QUEUE_NAMES,
+} from "@repo/config";
 import { WorkspaceContext } from "../common/interfaces/request.interface";
 import { JwtUser } from "../auth/interfaces/jwt.interface";
+import { InjectQueue } from "@nestjs/bullmq";
+import type { Queue } from "bullmq";
+import type { EmailJobPayload } from "@repo/email";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class InvitationsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+    @InjectQueue(QUEUE_NAMES.EMAIL)
+    private readonly emailQueue: Queue<EmailJobPayload>,
+  ) {}
 
   async create(
     workspace: WorkspaceContext,
@@ -71,6 +85,30 @@ export class InvitationsService {
           token,
         },
       });
+
+      const appWebUrl = this.configService.getOrThrow<string>(
+        ENV_KEYS.APP_WEB_URL,
+      );
+      const inviteUrl = `${appWebUrl.replace(/\/$/, "")}/invitations/accept?token=${token}`;
+
+      await this.emailQueue.add(
+        JOB_NAMES.SEND_EMAIL,
+        {
+          kind: "workspace_invite",
+          to: dto.email,
+          workspaceName: workspace.name,
+          inviterEmail: user.email,
+          role: dto.role as string,
+          inviteUrl,
+        },
+        {
+          attempts: 3,
+          backoff: { type: "exponential", delay: 2000 },
+          removeOnComplete: 100,
+          removeOnFail: 50,
+        },
+      );
+
       return dbInvitation;
     } catch (error) {
       if (
