@@ -5,20 +5,21 @@
   "tsx": true,
   "tailwind": {
     "config": "",
-    "css": "src/styles/globals.css",
+    "css": "../../packages/ui/src/styles/globals.css",
     "baseColor": "neutral",
     "cssVariables": true,
     "prefix": ""
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@repo/ui/components",
+    "components": "@/components",
+    "hooks": "@/hooks",
+    "lib": "@/lib",
     "utils": "@repo/ui/lib/utils",
-    "hooks": "@repo/ui/hooks",
-    "lib": "@repo/ui/lib",
     "ui": "@repo/ui/components"
   },
+  "rtl": false,
   "menuColor": "default",
   "menuAccent": "subtle",
-  "rtl": false
+  "registries": {}
 }
