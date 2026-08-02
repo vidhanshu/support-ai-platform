@@ -88,8 +88,8 @@ export default function LandingPage() {
       <Nav />
 
       {/* Hero */}
-      <section className="mx-auto grid min-h-[calc(100vh-68px)] max-w-6xl items-center lg:grid-cols-5 mt-[68px]">
-        <div className="col-span-3 flex flex-col gap-y-6 px-6 py-12 lg:px-12 lg:py-8">
+      <section className="mx-auto grid min-h-[calc(100vh-68px)] max-w-7xl items-center lg:grid-cols-7 mt-[68px]">
+        <div className="col-span-4 flex flex-col gap-y-6 px-6 py-12 lg:px-12 lg:py-8">
           <h1 className="text-5xl font-medium tracking-tight sm:text-6xl lg:text-7xl">
             Conversational <Accent>agents</Accent> for{" "}
             <Accent>customer</Accent> experience
@@ -115,7 +115,7 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="relative col-span-2 mx-auto h-[320px] w-full max-w-md px-6 sm:h-[420px] lg:mx-0 lg:h-full lg:min-h-[520px] lg:max-w-none lg:px-0">
+        <div className="relative col-span-3 mx-auto h-[320px] w-full max-w-md px-6 sm:h-[420px] lg:mx-0 lg:h-full lg:min-h-[520px] lg:max-w-none lg:px-0">
           <Image
             src="/hero.svg"
             alt="Support AI conversational agent"
