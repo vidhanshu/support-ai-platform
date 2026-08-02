@@ -109,10 +109,24 @@ export const QUEUE_CONFIGS = {
   },
 };
 
+export const WEBSITE_CONFIGS = {
+  DEFAULT_MAX_PAGES: 50,
+  DEFAULT_MAX_DEPTH: 2,
+  MAX_ALLOWED_PAGES: 200,
+  MAX_ALLOWED_DEPTH: 3,
+  MAX_RESPONSE_BYTES: 2 * 1024 * 1024, // 2MB
+  FETCH_TIMEOUT_MS: 15_000,
+  FETCH_CONCURRENCY: 3,
+  MIN_TEXT_CHARS: 80,
+  USER_AGENT: "SupportAIBot/1.0 (+https://localhost; knowledge-crawler)",
+} as const;
+
 export const QUEUE_NAMES = {
   DOCUMENT_PROCESSING: "document-processing",
+  WEBSITE_PROCESSING: "website-processing",
 } as const;
 
 export const JOB_NAMES = {
   PROCESS_DOCUMENT: "process-document",
+  CRAWL_WEBSITE: "process-website",
 } as const;

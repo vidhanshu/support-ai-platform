@@ -27,9 +27,10 @@ export type ChatSource = {
   text: string;
   knowledgeSourceId: string;
   pageNumber?: number;
+  url?: string;
   title?: string;
   score: number;
-  metadata?: { pageNumber?: number } | null;
+  metadata?: { pageNumber?: number; url?: string; title?: string } | null;
 };
 
 export type ChatPipelineTimings = {
@@ -303,6 +304,7 @@ export class ChatService {
         text: chunk.text,
         knowledgeSourceId: chunk.knowledgeSourceId,
         pageNumber: chunk.pageNumber,
+        url: chunk.url,
         title: chunk.title,
         score: chunk.score,
         metadata: chunk.metadata ?? null,

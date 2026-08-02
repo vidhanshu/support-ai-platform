@@ -195,11 +195,30 @@ model KnowledgeSource {
 
   // TODO: Add QnA and website support
   // qna QnA?
-  // website Website?
+  website Website?
 
   chunks Chunk[]
 
   @@index([workspaceId])
+}
+
+model Website {
+  id            String    @id @default(uuid())
+  rootUrl       String
+  allowedHosts  String[] // or derieved from rootUrl
+  maxPages      Int       @default(50)
+  crawlDepth    Int       @default(2)
+  pagesFound    Int       @default(0)
+  pagesCrawled  Int       @default(0)
+  lastCrawledAt DateTime?
+  errorMessage  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  knowledgeSourceId String          @unique
+  knowledgeSource   KnowledgeSource @relation(fields: [knowledgeSourceId], references: [id], onDelete: Cascade)
+
+  @@index([knowledgeSourceId])
 }
 
 model Document {

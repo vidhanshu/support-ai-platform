@@ -5,6 +5,7 @@ import { getRootEnvPath, QUEUE_CONFIGS, QUEUE_NAMES } from "@repo/config";
 import { HealthModule } from "./modules/health/health.module";
 import { BullModule } from "@nestjs/bullmq";
 import { DocumentsModule } from './documents/documents.module';
+import { WebsitesModule } from './websites/websites.module';
 
 @Module({
   imports: [
@@ -24,9 +25,13 @@ import { DocumentsModule } from './documents/documents.module';
     BullModule.registerQueue({
       name: QUEUE_NAMES.DOCUMENT_PROCESSING,
     }),
+    BullModule.registerQueue({
+      name: QUEUE_NAMES.WEBSITE_PROCESSING,
+    }),
     PrismaModule,
     HealthModule,
     DocumentsModule,
+    WebsitesModule,
   ],
 })
 export class AppModule {}

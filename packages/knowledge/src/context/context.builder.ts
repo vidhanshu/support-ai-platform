@@ -27,24 +27,33 @@ export class ContextBuilder {
 
     const context = chunks
       .map((chunk) => {
-        const sourceName = chunk.title?.trim() || "Unknown source";
+        const sourceName =
+          chunk.title?.trim() ||
+          chunk.metadata?.title?.trim() ||
+          "Unknown source";
+        const url = chunk.url ?? chunk.metadata?.url;
         const page =
-          chunk.pageNumber !== undefined ? String(chunk.pageNumber) : "N/A";
+          chunk.pageNumber !== undefined
+            ? String(chunk.pageNumber)
+            : chunk.metadata?.pageNumber !== undefined
+              ? String(chunk.metadata.pageNumber)
+              : undefined;
+
         const content =
           chunk.text.length > maxChunkChars
             ? `${chunk.text.slice(0, maxChunkChars)}…`
             : chunk.text;
 
-        return [
-          "Source:",
-          sourceName,
-          "",
-          "Page:",
-          page,
-          "",
-          "Content:",
-          content,
-        ].join("\n");
+        const lines = ["Source:", sourceName, ""];
+
+        if (url) {
+          lines.push("URL:", url, "");
+        } else if (page !== undefined) {
+          lines.push("Page:", page, "");
+        }
+
+        lines.push("Content:", content);
+        return lines.join("\n");
       })
       .join("\n\n---\n\n");
 

@@ -117,7 +117,10 @@ export class RetrievalService {
           knowledgeSourceId: hit.knowledgeSourceId,
           score: this.distanceToScore(Number(hit.distance)),
           pageNumber: metadata?.pageNumber,
-          title: titleBySourceId.get(hit.knowledgeSourceId),
+          url: metadata?.url,
+          title:
+            metadata?.title ||
+            titleBySourceId.get(hit.knowledgeSourceId),
           metadata: metadata ?? null,
         };
       });
@@ -163,9 +166,11 @@ export class RetrievalService {
 
     for (const chunk of chunks) {
       const key =
-        chunk.pageNumber !== undefined
-          ? `${chunk.knowledgeSourceId}:page:${chunk.pageNumber}`
-          : `${chunk.knowledgeSourceId}:idx:${chunk.chunkIndex}`;
+        chunk.url !== undefined
+          ? `${chunk.knowledgeSourceId}:url:${chunk.url}`
+          : chunk.pageNumber !== undefined
+            ? `${chunk.knowledgeSourceId}:page:${chunk.pageNumber}`
+            : `${chunk.knowledgeSourceId}:idx:${chunk.chunkIndex}`;
 
       const existing = bestByKey.get(key);
       if (!existing || chunk.score > existing.score) {
@@ -183,11 +188,24 @@ export class RetrievalService {
 
   private asChunkMetadata(metadata: unknown): ChunkMetadata | undefined {
     if (!metadata || typeof metadata !== "object") return undefined;
-    const pageNumber = (metadata as { pageNumber?: unknown }).pageNumber;
-    if (typeof pageNumber === "number") {
-      return { pageNumber };
+    const value = metadata as {
+      pageNumber?: unknown;
+      url?: unknown;
+      title?: unknown;
+    };
+
+    const result: ChunkMetadata = {};
+    if (typeof value.pageNumber === "number") {
+      result.pageNumber = value.pageNumber;
     }
-    return undefined;
+    if (typeof value.url === "string") {
+      result.url = value.url;
+    }
+    if (typeof value.title === "string") {
+      result.title = value.title;
+    }
+
+    return Object.keys(result).length > 0 ? result : undefined;
   }
 
   private elapsed(start: number) {
