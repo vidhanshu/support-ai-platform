@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@repo/ui/components/button";
 import {
   NavigationMenu,
@@ -21,6 +23,8 @@ import {
   User,
 } from "lucide-react";
 import { ThemeToggle } from "../theme-provider";
+import { useMe } from "@/hooks/api";
+import { Skeleton } from "@repo/ui/components/skeleton";
 
 const solutions: {
   title: string;
@@ -98,6 +102,9 @@ const resources: {
 ];
 
 export function Nav() {
+  const { data, isFetching } = useMe();
+  const isAuthenticated = !isFetching && data?.id;
+
   return (
     <nav className="flex items-center gap-x-4 fixed top-0 z-10 bg-background p-4 inset-x-0 max-w-6xl mx-auto">
       <div className="flex-1 flex items-center justify-between">
@@ -157,10 +164,30 @@ export function Nav() {
             </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
-        <div className="flex items-center gap-x-4">
-          <Button size="lg" variant="outline">Login</Button>
-          <Button size="lg">Sign up</Button>
-        </div>
+        {isFetching? (
+          <div className="flex items-center gap-x-4">
+            <Skeleton className="w-32 h-8 rounded-sm" />
+          </div>
+        ) : isAuthenticated ? (
+          <div className="flex items-center gap-x-4">
+            <Button size="lg" variant="outline">
+              <Link href="/workspace">
+                <span>Workspace</span>
+              </Link>
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-x-4">
+            <Link href="/auth?mode=login">
+              <Button size="lg" variant="outline">
+                Login
+              </Button>
+            </Link>
+            <Link href="/auth?mode=signup">
+              <Button size="lg">Sign up</Button>
+            </Link>
+          </div>
+        )}
       </div>
       <ThemeToggle iconOnly size="lg" />
     </nav>

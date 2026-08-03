@@ -1,69 +1,31 @@
-"use client";
+import { Suspense } from "react";
+import { AuthView } from "@/components/auth/auth-view";
 
-import { useQuery } from "@tanstack/react-query";
-import { Button } from "@repo/ui/components/button";
-
-async function fetchApiHealth(): Promise<{ status: string; database: string }> {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-  const response = await fetch(`${baseUrl}/health`);
-
-  if (!response.ok) {
-    throw new Error("API health check failed");
-  }
-
-  return response.json() as Promise<{ status: string; database: string }>;
+function AuthFallback() {
+  return (
+    <div className="grid min-h-screen lg:grid-cols-2">
+      <div className="flex flex-col px-6 py-8 sm:px-10">
+        <div className="mb-16 flex items-center justify-between">
+          <div className="h-7 w-36 animate-pulse rounded bg-muted" />
+          <div className="h-9 w-44 animate-pulse rounded-lg bg-muted" />
+        </div>
+        <div className="mx-auto w-full max-w-[400px] flex-1 space-y-4 pt-10">
+          <div className="h-9 w-56 animate-pulse rounded bg-muted" />
+          <div className="h-4 w-72 animate-pulse rounded bg-muted" />
+          <div className="mt-8 h-10 animate-pulse rounded-lg bg-muted" />
+          <div className="h-10 animate-pulse rounded-lg bg-muted" />
+          <div className="h-10 animate-pulse rounded-lg bg-muted" />
+        </div>
+      </div>
+      <div className="hidden bg-primary lg:block" />
+    </div>
+  );
 }
 
 export default function AuthPage() {
-  const healthQuery = useQuery({
-    queryKey: ["api-health"],
-    queryFn: fetchApiHealth,
-    retry: false,
-  });
-
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center gap-8 px-6 py-16">
-      <div className="space-y-3">
-        <p className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
-          Support AI Platform
-        </p>
-        <h1 className="text-4xl font-semibold tracking-tight text-foreground">
-          Dashboard
-        </h1>
-        <p className="max-w-xl text-lg text-muted-foreground">
-          Phase 1 foundation shell. Auth, agents, and conversations come next.
-        </p>
-      </div>
-
-      <div className="flex gap-3">
-        <Button>Primary</Button>
-        <Button variant="outline">Outline</Button>
-        <Button variant="secondary">Secondary</Button>
-      </div>
-
-      <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">API health</p>
-        {healthQuery.isLoading ? (
-          <p className="text-foreground">Checking…</p>
-        ) : null}
-        {healthQuery.isError ? (
-          <p className="text-destructive">
-            Unreachable — start the API and Postgres first.
-          </p>
-        ) : null}
-        {healthQuery.data ? (
-          <p className="text-foreground">
-            {healthQuery.data.status} · database {healthQuery.data.database}
-          </p>
-        ) : null}
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => void healthQuery.refetch()}
-        >
-          Refresh
-        </Button>
-      </div>
-    </main>
+    <Suspense fallback={<AuthFallback />}>
+      <AuthView />
+    </Suspense>
   );
 }
