@@ -1,13 +1,14 @@
 "use client";
 
 import { Button } from "@repo/ui/components/button";
-import { useHealth, useMe, useWorkspaces } from "@/hooks/api";
+import { useHealth, useLogout, useMe, useWorkspaces } from "@/hooks/api";
 import { getErrorMessage } from "@/lib/api";
 
 export default function WorkspaceDashboardPage() {
   const healthQuery = useHealth();
   const meQuery = useMe();
   const workspacesQuery = useWorkspaces();
+  const { mutate: logout } = useLogout();
 
   return (
     <main className="mx-auto flex min-h-screen max-w-3xl flex-col justify-center gap-8 px-6 py-16">
@@ -73,7 +74,10 @@ export default function WorkspaceDashboardPage() {
                 className="rounded-lg border border-border px-3 py-2 text-sm"
               >
                 <span className="font-medium">{workspace.name}</span>
-                <span className="text-muted-foreground"> · {workspace.slug}</span>
+                <span className="text-muted-foreground">
+                  {" "}
+                  · {workspace.slug}
+                </span>
               </li>
             ))}
           </ul>
@@ -81,6 +85,8 @@ export default function WorkspaceDashboardPage() {
         {workspacesQuery.data && workspacesQuery.data.length === 0 ? (
           <p className="text-muted-foreground">No workspaces yet.</p>
         ) : null}
+
+        <Button onClick={() => logout()}>Logout</Button>
       </div>
     </main>
   );

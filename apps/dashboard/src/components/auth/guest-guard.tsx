@@ -6,6 +6,7 @@ import {
   AUTH_DEFAULT_REDIRECT,
   hasSession,
 } from "@/lib/auth/tokens";
+import { LoaderCircle } from "lucide-react";
 
 type GuestGuardProps = {
   children: React.ReactNode;
@@ -36,7 +37,9 @@ export function GuestGuard({ children }: GuestGuardProps) {
   if (!ready) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <p className="text-sm text-muted-foreground">
+          <LoaderCircle className="size-6 animate-spin"/>
+        </p>
       </div>
     );
   }
