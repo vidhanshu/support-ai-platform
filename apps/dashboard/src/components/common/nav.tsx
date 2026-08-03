@@ -22,6 +22,7 @@ import {
   Mail,
   User,
 } from "lucide-react";
+import { useIsClient } from "usehooks-ts";
 import { ThemeToggle } from "../theme-provider";
 import { useMe } from "@/hooks/api";
 import { Skeleton } from "@repo/ui/components/skeleton";
@@ -102,8 +103,11 @@ const resources: {
 ];
 
 export function Nav() {
-  const { data, isFetching } = useMe();
-  const isAuthenticated = !isFetching && data?.id;
+  const isClient = useIsClient();
+  const { data, isLoading } = useMe();
+
+  const showAuthSkeleton = !isClient || isLoading;
+  const isAuthenticated = Boolean(data?.id);
 
   return (
     <nav className="flex items-center gap-x-4 fixed top-0 z-10 bg-background p-4 inset-x-0 max-w-6xl mx-auto">
@@ -164,28 +168,38 @@ export function Nav() {
             </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
-        {isFetching? (
+        {showAuthSkeleton ? (
           <div className="flex items-center gap-x-4">
-            <Skeleton className="w-32 h-8 rounded-sm" />
+            <Skeleton className="h-8 w-32 rounded-sm" />
           </div>
         ) : isAuthenticated ? (
           <div className="flex items-center gap-x-4">
-            <Button size="lg" variant="outline">
-              <Link href="/workspace">
-                <span>Workspace</span>
-              </Link>
+            <Button
+              size="lg"
+              variant="outline"
+              nativeButton={false}
+              render={<Link href="/workspace" />}
+            >
+              Workspace
             </Button>
           </div>
         ) : (
           <div className="flex items-center gap-x-4">
-            <Link href="/auth?mode=login">
-              <Button size="lg" variant="outline">
-                Login
-              </Button>
-            </Link>
-            <Link href="/auth?mode=signup">
-              <Button size="lg">Sign up</Button>
-            </Link>
+            <Button
+              size="lg"
+              variant="outline"
+              nativeButton={false}
+              render={<Link href="/auth?mode=login" />}
+            >
+              Login
+            </Button>
+            <Button
+              size="lg"
+              nativeButton={false}
+              render={<Link href="/auth?mode=signup" />}
+            >
+              Sign up
+            </Button>
           </div>
         )}
       </div>

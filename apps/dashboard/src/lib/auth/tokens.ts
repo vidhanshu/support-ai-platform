@@ -44,3 +44,30 @@ export function clearSession() {
   clearAuthTokens();
   clearWorkspaceId();
 }
+
+/** True when either access or refresh token is present (client-only). */
+export function hasSession() {
+  return Boolean(getAccessToken() || getRefreshToken());
+}
+
+export const AUTH_LOGIN_PATH = "/auth?mode=login";
+export const AUTH_DEFAULT_REDIRECT = "/workspace";
+
+/**
+ * Hard redirect to login after session loss (e.g. failed refresh).
+ * Skips when already on an auth route to avoid loops.
+ */
+export function redirectToLogin(options?: { next?: string }) {
+  if (typeof window === "undefined") return;
+
+  const { pathname, search } = window.location;
+  if (pathname.startsWith("/auth")) return;
+
+  const next = options?.next ?? `${pathname}${search}`;
+  const params = new URLSearchParams({ mode: "login" });
+  if (next && next !== "/" && !next.startsWith("/auth")) {
+    params.set("next", next);
+  }
+
+  window.location.replace(`/auth?${params.toString()}`);
+}

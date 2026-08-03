@@ -11,6 +11,7 @@ import {
   getAccessToken,
   getRefreshToken,
   getWorkspaceId,
+  redirectToLogin,
   saveAuthTokens,
   type AuthTokens,
 } from "@/lib/auth/tokens";
@@ -100,11 +101,19 @@ function toApiError(error: unknown): ApiError {
   return new ApiError("Something went wrong", 0);
 }
 
+function endSessionAndRedirectToLogin() {
+  clearSession();
+  redirectToLogin();
+}
+
 async function refreshAccessToken(client: AxiosInstance): Promise<boolean> {
   if (!refreshPromise) {
     refreshPromise = (async () => {
       const refreshToken = getRefreshToken();
-      if (!refreshToken) return false;
+      if (!refreshToken) {
+        endSessionAndRedirectToLogin();
+        return false;
+      }
 
       try {
         const response = await client.post<unknown>(
@@ -119,7 +128,7 @@ async function refreshAccessToken(client: AxiosInstance): Promise<boolean> {
         saveAuthTokens(tokens);
         return true;
       } catch {
-        clearSession();
+        endSessionAndRedirectToLogin();
         return false;
       } finally {
         refreshPromise = null;

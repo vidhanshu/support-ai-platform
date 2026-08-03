@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
-import { Button, ButtonProps } from "@repo/ui/components/button";
-import { LucideProps, Moon, Sun } from "lucide-react";
+import { useIsClient } from "usehooks-ts";
+import { Button, type ButtonProps } from "@repo/ui/components/button";
+import { type LucideProps, Moon, Sun } from "lucide-react";
 
 export function ThemeProvider({
   children,
@@ -17,33 +18,40 @@ export function ThemeToggle({
   iconProps,
   ...props
 }: { iconOnly?: boolean; iconProps?: LucideProps } & ButtonProps) {
-  const { theme, setTheme } = useTheme();
-  const isDark = theme === "dark";
-  const handleThemeChange = () => {
-    setTheme(isDark ? "light" : "dark");
-  };
+  const { resolvedTheme, setTheme } = useTheme();
+  const isClient = useIsClient();
+
+  // Same placeholder on server + first client paint (theme is unknown until hydrated).
+  if (!isClient) {
+    return (
+      <Button variant="outline" disabled aria-hidden {...props}>
+        <Sun {...iconProps} className="opacity-0" />
+      </Button>
+    );
+  }
+
+  const isDark = resolvedTheme === "dark";
+
   return (
-    <Button variant="outline" onClick={handleThemeChange} {...props}>
+    <Button
+      variant="outline"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      {...props}
+    >
       {isDark ? (
-        <>
-          {iconOnly ? (
-            <Sun {...iconProps} />
-          ) : (
-            <span className="flex items-center gap-x-2">
-              <Sun {...iconProps} /> Light
-            </span>
-          )}
-        </>
+        iconOnly ? (
+          <Sun {...iconProps} />
+        ) : (
+          <span className="flex items-center gap-x-2">
+            <Sun {...iconProps} /> Light
+          </span>
+        )
+      ) : iconOnly ? (
+        <Moon {...iconProps} />
       ) : (
-        <>
-          {iconOnly ? (
-            <Moon {...iconProps} />
-          ) : (
-            <span className="flex items-center gap-x-2">
-              <Moon {...iconProps} /> Dark
-            </span>
-          )}
-        </>
+        <span className="flex items-center gap-x-2">
+          <Moon {...iconProps} /> Dark
+        </span>
       )}
     </Button>
   );

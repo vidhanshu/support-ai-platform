@@ -1,7 +1,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useIsClient } from "usehooks-ts";
 import {
   authApi,
   queryKeys,
@@ -9,24 +10,48 @@ import {
   type RegisterInput,
 } from "@/lib/api";
 import {
+  AUTH_DEFAULT_REDIRECT,
   clearSession,
   getRefreshToken,
+  hasSession,
   saveAuthTokens,
 } from "@/lib/auth/tokens";
 import { toastApiError, toastSuccess } from "@/lib/toast";
 
+function usePostAuthRedirect() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  return () => {
+    const next = searchParams.get("next");
+    const target =
+      next &&
+      next.startsWith("/") &&
+      !next.startsWith("//") &&
+      !next.startsWith("/auth")
+        ? next
+        : AUTH_DEFAULT_REDIRECT;
+    router.push(target);
+    router.refresh();
+  };
+}
+
 export function useMe(enabled = true) {
+  // Defer session check until after hydrate so SSR and the first client
+  // render stay aligned (localStorage is not available on the server).
+  const isClient = useIsClient();
+
   return useQuery({
     queryKey: queryKeys.auth.me(),
     queryFn: () => authApi.me(),
-    enabled: enabled && typeof window !== "undefined",
+    enabled: enabled && isClient && hasSession(),
     retry: false,
   });
 }
 
 export function useLogin() {
   const queryClient = useQueryClient();
-  const router = useRouter();
+  const redirectAfterAuth = usePostAuthRedirect();
 
   return useMutation({
     mutationFn: (input: LoginInput) => authApi.login(input),
@@ -34,8 +59,7 @@ export function useLogin() {
       saveAuthTokens(tokens);
       void queryClient.invalidateQueries({ queryKey: queryKeys.auth.all });
       toastSuccess("Logged in successfully");
-      router.push("/workspace");
-      router.refresh();
+      redirectAfterAuth();
     },
     onError: (error) => {
       toastApiError(error, "Unable to sign in. Please try again.");
@@ -45,7 +69,7 @@ export function useLogin() {
 
 export function useRegister() {
   const queryClient = useQueryClient();
-  const router = useRouter();
+  const redirectAfterAuth = usePostAuthRedirect();
 
   return useMutation({
     mutationFn: (input: RegisterInput) => authApi.register(input),
@@ -53,8 +77,7 @@ export function useRegister() {
       saveAuthTokens(tokens);
       void queryClient.invalidateQueries({ queryKey: queryKeys.auth.all });
       toastSuccess("Account created successfully");
-      router.push("/workspace");
-      router.refresh();
+      redirectAfterAuth();
     },
     onError: (error) => {
       toastApiError(error, "Unable to create your account. Please try again.");
