@@ -51,7 +51,7 @@ export function hasSession() {
 }
 
 export const AUTH_LOGIN_PATH = "/auth?mode=login";
-export const AUTH_DEFAULT_REDIRECT = "/workspace";
+export const AUTH_DEFAULT_REDIRECT = "/dashboard";
 
 /**
  * Hard redirect to login after session loss (e.g. failed refresh).

@@ -26,6 +26,7 @@ import { useIsClient } from "usehooks-ts";
 import { ThemeToggle } from "../theme-provider";
 import { useMe } from "@/hooks/api";
 import { Skeleton } from "@repo/ui/components/skeleton";
+import Logo from "./logo";
 
 const solutions: {
   title: string;
@@ -112,7 +113,7 @@ export function Nav() {
   return (
     <nav className="flex items-center gap-x-4 fixed top-0 z-10 bg-background p-4 inset-x-0 max-w-6xl mx-auto">
       <div className="flex-1 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Support AI</h1>
+        <Logo/>
         <NavigationMenu>
           <NavigationMenuList className="gap-x-4">
             <NavigationMenuItem>
@@ -178,9 +179,9 @@ export function Nav() {
               size="lg"
               variant="outline"
               nativeButton={false}
-              render={<Link href="/workspace" />}
+              render={<Link href="/dashboard" />}
             >
-              Workspace
+              Dashboard
             </Button>
           </div>
         ) : (

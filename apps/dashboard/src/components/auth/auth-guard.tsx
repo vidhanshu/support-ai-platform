@@ -2,10 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  AUTH_LOGIN_PATH,
-  hasSession,
-} from "@/lib/auth/tokens";
+import { AUTH_LOGIN_PATH, hasSession } from "@/lib/auth/tokens";
+import { LoaderCircle } from "lucide-react";
 
 type AuthGuardProps = {
   children: React.ReactNode;
@@ -31,7 +29,7 @@ export function AuthGuard({ children }: AuthGuardProps) {
   if (!ready) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <LoaderCircle className="size-6 animate-spin" />
       </div>
     );
   }

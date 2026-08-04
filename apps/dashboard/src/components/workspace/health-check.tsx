@@ -4,7 +4,7 @@ import { Button } from "@repo/ui/components/button";
 import { useHealth, useLogout, useMe, useWorkspaces } from "@/hooks/api";
 import { getErrorMessage } from "@/lib/api";
 
-export default function WorkspaceDashboardPage() {
+export default function HealthCheck() {
   const healthQuery = useHealth();
   const meQuery = useMe();
   const workspacesQuery = useWorkspaces();
