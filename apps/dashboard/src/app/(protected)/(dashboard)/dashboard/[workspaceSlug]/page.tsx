@@ -1,13 +1,15 @@
-import React from "react";
+import { PlaceholderPage } from "@/components/common/placeholder-page";
 
-const Agents = async ({
+export default async function WorkspaceHomePage({
   params,
 }: {
   params: Promise<{ workspaceSlug: string }>;
-}) => {
+}) {
   const { workspaceSlug } = await params;
-
-  return <div>Agents: {workspaceSlug}</div>;
-};
-
-export default Agents;
+  return (
+    <PlaceholderPage
+      title="Agents"
+      description={`Workspace “${workspaceSlug}” — agent list placeholder.`}
+    />
+  );
+}
