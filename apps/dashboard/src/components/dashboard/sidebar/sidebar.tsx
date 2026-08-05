@@ -10,6 +10,7 @@ import {
 } from "@repo/ui/components/sidebar";
 import { getSidebarNavGroups } from "./nav-config";
 import { NavUser } from "./nav-user";
+import { SidebarBrand } from "./sidebar-brand";
 import { SidebarNav } from "./sidebar-nav";
 import { WorkspaceSwitcher } from "./workspace-switcher";
 
@@ -31,7 +32,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
+      <SidebarHeader className="gap-2 border-b border-sidebar-border">
+        <SidebarBrand />
         <WorkspaceSwitcher />
       </SidebarHeader>
       <SidebarContent className="bg-background">

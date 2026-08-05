@@ -169,7 +169,7 @@ export function PlaygroundView({ agentId }: PlaygroundViewProps) {
 
   if (agentQuery.isLoading) {
     return (
-      <div className="flex flex-col gap-4 lg:h-[calc(100svh-5rem)] lg:overflow-hidden">
+      <div className="flex flex-col gap-4 lg:h-[calc(100svh-2rem)] lg:overflow-hidden">
         <Skeleton className="h-8 w-40 shrink-0" />
         <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
           <Skeleton className="h-64 w-full rounded-xl" />
@@ -190,7 +190,7 @@ export function PlaygroundView({ agentId }: PlaygroundViewProps) {
   const agent = agentQuery.data;
 
   return (
-    <div className="flex flex-col gap-4 lg:h-[calc(100svh-5rem)] lg:overflow-hidden">
+    <div className="flex flex-col gap-4 lg:h-[calc(100svh-2rem)] lg:overflow-hidden">
       <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Playground</h1>

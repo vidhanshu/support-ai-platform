@@ -128,7 +128,7 @@ export function ConversationsView({ agentId }: ConversationsViewProps) {
   }
 
   return (
-    <div className="flex h-[calc(100svh-5rem)] min-h-0 flex-col gap-3 overflow-hidden">
+    <div className="flex h-[calc(100svh-2rem)] min-h-0 flex-col gap-3 overflow-hidden">
       <div className="shrink-0">
         <h1 className="text-2xl font-semibold tracking-tight">Conversations</h1>
         <p className="text-sm text-muted-foreground">
