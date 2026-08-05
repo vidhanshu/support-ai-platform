@@ -33,6 +33,7 @@ import { Skeleton } from "@repo/ui/components/skeleton";
 import { Slider } from "@repo/ui/components/slider";
 import { Textarea } from "@repo/ui/components/textarea";
 import { cn } from "@repo/ui/lib/utils";
+import { MarkdownContent } from "@/components/common/markdown-content";
 import { useAgent, usePlaygroundChat, useUpdateAgent } from "@/hooks/api";
 import { useActiveWorkspace } from "@/hooks/use-active-workspace";
 import {
@@ -168,11 +169,11 @@ export function PlaygroundView({ agentId }: PlaygroundViewProps) {
 
   if (agentQuery.isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-8 w-40" />
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
-          <Skeleton className="h-[36rem] w-full rounded-xl" />
-          <Skeleton className="h-[36rem] w-full rounded-xl" />
+      <div className="flex flex-col gap-4 lg:h-[calc(100svh-5rem)] lg:overflow-hidden">
+        <Skeleton className="h-8 w-40 shrink-0" />
+        <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
+          <Skeleton className="h-64 w-full rounded-xl" />
+          <Skeleton className="h-64 w-full rounded-xl lg:h-full" />
         </div>
       </div>
     );
@@ -189,8 +190,8 @@ export function PlaygroundView({ agentId }: PlaygroundViewProps) {
   const agent = agentQuery.data;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex flex-col gap-4 lg:h-[calc(100svh-5rem)] lg:overflow-hidden">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Playground</h1>
           <p className="text-sm text-muted-foreground">
@@ -206,196 +207,203 @@ export function PlaygroundView({ agentId }: PlaygroundViewProps) {
         </Button>
       </div>
 
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
+      <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] lg:overflow-hidden xl:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
+        {/* Entire left column scrolls; cards keep natural height (no shrink/clip). */}
         <form
           onSubmit={form.handleSubmit(onSave)}
-          className="space-y-4 lg:sticky lg:top-4"
+          className="min-h-0 lg:h-full lg:overflow-y-auto lg:overscroll-contain lg:pr-1"
         >
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Model</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <Controller
-                name="model"
-                control={form.control}
-                render={({ field }) => (
-                  <Field>
-                    <FieldLabel>Model</FieldLabel>
-                    <Select
-                      value={field.value}
-                      onValueChange={(value) => {
-                        if (value != null) field.onChange(value);
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {AVAILABLE_AGENT_MODELS.map((model) => (
-                          <SelectItem key={model.value} value={model.value}>
-                            {model.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </Field>
-                )}
-              />
+          <div className="space-y-4 pb-2">
+            <Card className="overflow-visible">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">Model</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <Controller
+                  name="model"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Field>
+                      <FieldLabel>Model</FieldLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={(value) => {
+                          if (value != null) field.onChange(value);
+                        }}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {AVAILABLE_AGENT_MODELS.map((model) => (
+                            <SelectItem key={model.value} value={model.value}>
+                              {model.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                  )}
+                />
 
-              <Controller
-                name="temperature"
-                control={form.control}
-                render={({ field }) => (
-                  <Field className="gap-3">
-                    <div className="flex items-center justify-between">
-                      <FieldLabel>Temperature</FieldLabel>
-                      <span className="text-xs tabular-nums text-muted-foreground">
-                        {field.value.toFixed(1)}
-                      </span>
+                <Controller
+                  name="temperature"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Field className="gap-3">
+                      <div className="flex items-center justify-between">
+                        <FieldLabel>Temperature</FieldLabel>
+                        <span className="text-xs tabular-nums text-muted-foreground">
+                          {field.value.toFixed(1)}
+                        </span>
+                      </div>
+                      <Slider
+                        min={0}
+                        max={2}
+                        step={0.1}
+                        value={[field.value]}
+                        onValueChange={(value) => {
+                          const next = Array.isArray(value) ? value[0] : value;
+                          if (typeof next === "number") field.onChange(next);
+                        }}
+                      />
+                    </Field>
+                  )}
+                />
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-visible">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <CardTitle className="text-base">Data sources</CardTitle>
+                    <CardDescription>
+                      Manage attach/detach on the Data sources page.
+                    </CardDescription>
+                  </div>
+                  <Button
+                    nativeButton={false}
+                    render={<Link href={dataSourcesHref} />}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Manage
+                    <ExternalLink className="size-3.5" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                  <span className="inline-flex items-center gap-2">
+                    <span
+                      className={cn(
+                        "size-2 rounded-full",
+                        training.tone === "ready" && "bg-emerald-500",
+                        training.tone === "amber" && "bg-amber-500",
+                        training.tone === "destructive" && "bg-destructive",
+                        training.tone === "muted" && "bg-muted-foreground/50",
+                      )}
+                    />
+                    {training.label}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {formatBytes(sourceStats.totalBytes)}
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="flex items-center gap-2 rounded-lg border px-3 py-2">
+                    <FileText className="size-4 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium tabular-nums">
+                        {sourceStats.files}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Files</p>
                     </div>
-                    <Slider
-                      min={0}
-                      max={2}
-                      step={0.1}
-                      value={[field.value]}
-                      onValueChange={(value) => {
-                        const next = Array.isArray(value) ? value[0] : value;
-                        if (typeof next === "number") field.onChange(next);
-                      }}
-                    />
-                  </Field>
-                )}
-              />
-            </CardContent>
-          </Card>
+                  </div>
+                  <div className="flex items-center gap-2 rounded-lg border px-3 py-2">
+                    <Globe className="size-4 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium tabular-nums">
+                        {sourceStats.links}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Links</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <CardTitle className="text-base">Data sources</CardTitle>
-                  <CardDescription>
-                    Manage attach/detach on the Data sources page.
-                  </CardDescription>
-                </div>
-                <Button
-                  nativeButton={false}
-                  render={<Link href={dataSourcesHref} />}
-                  variant="outline"
-                  size="sm"
-                >
-                  Manage
-                  <ExternalLink className="size-3.5" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                <span className="inline-flex items-center gap-2">
-                  <span
-                    className={cn(
-                      "size-2 rounded-full",
-                      training.tone === "ready" && "bg-emerald-500",
-                      training.tone === "amber" && "bg-amber-500",
-                      training.tone === "destructive" && "bg-destructive",
-                      training.tone === "muted" && "bg-muted-foreground/50",
-                    )}
-                  />
-                  {training.label}
-                </span>
-                <span className="text-muted-foreground">
-                  {formatBytes(sourceStats.totalBytes)}
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="flex items-center gap-2 rounded-lg border px-3 py-2">
-                  <FileText className="size-4 text-muted-foreground" />
+            <Card className="overflow-visible">
+              <CardHeader className="border-b pb-4">
+                <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-medium tabular-nums">
-                      {sourceStats.files}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Files</p>
+                    <CardTitle className="text-base">Instructions</CardTitle>
+                    <CardDescription>
+                      Same prompts as Build → Instructions.
+                    </CardDescription>
                   </div>
+                  <Button
+                    nativeButton={false}
+                    render={<Link href={instructionsHref} />}
+                    variant="ghost"
+                    size="sm"
+                  >
+                    Open
+                  </Button>
                 </div>
-                <div className="flex items-center gap-2 rounded-lg border px-3 py-2">
-                  <Globe className="size-4 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium tabular-nums">
-                      {sourceStats.links}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Links</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="border-b pb-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <CardTitle className="text-base">Instructions</CardTitle>
-                  <CardDescription>
-                    Same prompts as Build → Instructions.
-                  </CardDescription>
-                </div>
-                <Button
-                  nativeButton={false}
-                  render={<Link href={instructionsHref} />}
-                  variant="ghost"
-                  size="sm"
-                >
-                  Open
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4 p-0">
-              <Controller
-                name="generalPrompt"
-                control={form.control}
-                render={({ field }) => (
-                  <div>
-                    <p className="border-b px-4 py-2 text-xs font-medium text-muted-foreground">
-                      General
-                    </p>
-                    <Textarea
-                      {...field}
-                      placeholder="Describe the agent’s role…"
-                      className="min-h-40 resize-y rounded-none border-0 bg-transparent px-4 py-3 shadow-none focus-visible:ring-0"
-                    />
-                  </div>
-                )}
-              />
-              <Controller
-                name="guardrailsPrompt"
-                control={form.control}
-                render={({ field }) => (
-                  <div className="border-t">
-                    <p className="border-b px-4 py-2 text-xs font-medium text-muted-foreground">
-                      Guardrails
-                    </p>
-                    <Textarea
-                      {...field}
-                      placeholder="List hard rules…"
-                      className="min-h-28 resize-y rounded-none border-0 bg-transparent px-4 py-3 shadow-none focus-visible:ring-0"
-                    />
-                  </div>
-                )}
-              />
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent className="space-y-4 overflow-visible p-0">
+                <Controller
+                  name="generalPrompt"
+                  control={form.control}
+                  render={({ field }) => (
+                    <div>
+                      <p className="border-b px-4 py-2 text-xs font-medium text-muted-foreground">
+                        General
+                      </p>
+                      <Textarea
+                        {...field}
+                        rows={8}
+                        placeholder="Describe the agent’s role…"
+                        className="min-h-40 resize-y rounded-none border-0 bg-transparent px-4 py-3 shadow-none focus-visible:ring-0"
+                      />
+                    </div>
+                  )}
+                />
+                <Controller
+                  name="guardrailsPrompt"
+                  control={form.control}
+                  render={({ field }) => (
+                    <div className="border-t">
+                      <p className="border-b px-4 py-2 text-xs font-medium text-muted-foreground">
+                        Guardrails
+                      </p>
+                      <Textarea
+                        {...field}
+                        rows={6}
+                        placeholder="List hard rules…"
+                        className="min-h-28 resize-y rounded-none border-0 bg-transparent px-4 py-3 shadow-none focus-visible:ring-0"
+                      />
+                    </div>
+                  )}
+                />
+              </CardContent>
+            </Card>
+          </div>
         </form>
 
-        <ChatPreview
-          agentName={agent.name}
-          messages={chat.messages}
-          status={chat.status}
-          error={chat.error}
-          isStreaming={chat.isStreaming}
-          onSend={chat.sendMessage}
-          onReset={chat.reset}
-        />
+        <div className="min-h-0 lg:h-full">
+          <ChatPreview
+            agentName={agent.name}
+            messages={chat.messages}
+            status={chat.status}
+            error={chat.error}
+            isStreaming={chat.isStreaming}
+            onSend={chat.sendMessage}
+            onReset={chat.reset}
+          />
+        </div>
       </div>
     </div>
   );
@@ -425,15 +433,15 @@ function ChatPreview({
   }, [messages, status]);
 
   return (
-    <Card className="overflow-hidden border-dashed bg-muted/30">
+    <Card className="h-full min-h-[28rem] gap-0 py-0 lg:min-h-0 border-dashed bg-muted/30">
       <CardContent
         className={cn(
-          "flex min-h-[36rem] flex-col p-4 sm:p-6",
+          "flex h-full min-h-0 flex-1 flex-col p-4 sm:p-6",
           "bg-[radial-gradient(circle_at_1px_1px,var(--border)_1px,transparent_0)] [background-size:18px_18px]",
         )}
       >
-        <div className="relative mx-auto flex w-full max-w-md flex-1 flex-col overflow-hidden rounded-2xl border bg-background shadow-sm">
-          <div className="flex items-center justify-between border-b px-4 py-3">
+        <div className="relative mx-auto flex h-full min-h-0 w-full max-w-md flex-1 flex-col overflow-hidden rounded-2xl border bg-background shadow-sm">
+          <div className="flex shrink-0 items-center justify-between border-b px-4 py-3">
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{agentName}</p>
               <p className="text-xs text-muted-foreground">Playground preview</p>
@@ -450,7 +458,7 @@ function ChatPreview({
             </Button>
           </div>
 
-          <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
+          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4">
             {messages.length === 0 ? (
               <div className="mt-8 space-y-3 text-center">
                 <p className="text-sm font-medium">
@@ -465,19 +473,24 @@ function ChatPreview({
                 <div
                   key={message.id}
                   className={cn(
-                    "max-w-[90%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap",
+                    "max-w-[90%] rounded-2xl px-3 py-2 text-sm",
                     message.role === "user"
-                      ? "ml-auto bg-primary text-primary-foreground"
+                      ? "ml-auto whitespace-pre-wrap bg-primary text-primary-foreground"
                       : "bg-muted text-foreground",
                   )}
                 >
-                  {message.content ||
-                    (message.pending ? (
+                  {message.role === "assistant" ? (
+                    message.content ? (
+                      <MarkdownContent content={message.content} />
+                    ) : message.pending ? (
                       <span className="inline-flex items-center gap-1.5 text-muted-foreground">
                         <Loader2 className="size-3.5 animate-spin" />
                         Thinking…
                       </span>
-                    ) : null)}
+                    ) : null
+                  ) : (
+                    message.content
+                  )}
                   {message.role === "assistant" &&
                   message.sources &&
                   message.sources.length > 0 ? (
@@ -492,7 +505,7 @@ function ChatPreview({
             <div ref={bottomRef} />
           </div>
 
-          <div className="space-y-2 border-t p-3">
+          <div className="shrink-0 space-y-2 border-t p-3">
             {(status || error) && (
               <p
                 className={cn(

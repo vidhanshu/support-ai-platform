@@ -29,7 +29,6 @@ export type ChatStreamEvent =
       data: {
         conversationId: string;
         sources: ChatSource[];
-        warning?: string;
       };
     }
   | { type: "token"; data: { content: string } }

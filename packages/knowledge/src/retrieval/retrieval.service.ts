@@ -1,5 +1,5 @@
 import { VectorStoreService } from "@repo/vector-store";
-import { Injectable, Logger } from "@nestjs/common";
+import { BadRequestException, Injectable, Logger } from "@nestjs/common";
 import { KnowledgeSourceStatus, PrismaService } from "@repo/database";
 import { EmbeddingService } from "@repo/ai";
 import { AI_CONFIGS } from "@repo/config";
@@ -22,7 +22,6 @@ export type RetrievalResult = {
   knowledgeSourceCount: number;
   candidateCount: number;
   timings: RetrievalTimings;
-  warning?: string;
 };
 
 @Injectable()
@@ -78,21 +77,11 @@ export class RetrievalService {
 
       if (knowledgeSourceIds.length === 0) {
         this.logger.warn(
-          `[retrieval] agent ${agentId} has no attached knowledge sources`,
+          `[retrieval] agent ${agentId} has no ready knowledge sources`,
         );
-        return {
-          chunks: [],
-          knowledgeSourceCount: 0,
-          candidateCount: 0,
-          timings: {
-            embeddingMs: 0,
-            retrievalMs: 0,
-            rerankingMs: 0,
-            totalMs: this.elapsed(totalStart),
-          },
-          warning:
-            "No knowledge sources attached to this agent. Attach one before chatting.",
-        };
+        throw new BadRequestException(
+          "This agent has no ready knowledge sources. Attach and train at least one source before chatting.",
+        );
       }
 
       let stepStart = performance.now();

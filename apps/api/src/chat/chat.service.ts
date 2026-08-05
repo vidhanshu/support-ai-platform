@@ -2,12 +2,18 @@ import {
   ContextBuilder,
   RetrievalService,
 } from "@repo/knowledge";
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from "@nestjs/common";
 import { SendMessageDto } from "./dto/send-message.dto";
 import { JwtUser } from "../auth/interfaces/jwt.interface";
 import { WorkspaceContext } from "../common/interfaces/request.interface";
 import {
   Conversation,
+  KnowledgeSourceStatus,
   Message,
   MessageRole,
   PrismaService,
@@ -63,7 +69,6 @@ export type ChatStreamEvent =
       data: {
         conversationId: string;
         sources: ChatSource[];
-        warning?: string;
       };
     }
   | { type: "token"; data: { content: string } }
@@ -91,7 +96,6 @@ type PreparedChat = {
   >;
   knowledgeSourceCount: number;
   candidateCount: number;
-  warning?: string;
 };
 
 @Injectable()
@@ -116,6 +120,9 @@ export class ChatService {
   ): AsyncGenerator<ChatStreamEvent> {
     const totalStart = performance.now();
 
+    // Fail before opening the SSE stream so the client gets a normal 400 JSON body.
+    await this.assertAgentReadyForChat(workspace.id, agentId);
+
     yield { type: "status", data: { stage: "started", ms: 0 } };
     yield { type: "status", data: { stage: "retrieving" } };
 
@@ -138,7 +145,6 @@ export class ChatService {
       data: {
         conversationId: prepared.conversation.id,
         sources: prepared.sources,
-        ...(prepared.warning ? { warning: prepared.warning } : {}),
       },
     };
 
@@ -236,6 +242,30 @@ export class ChatService {
     }
   }
 
+  private async assertAgentReadyForChat(
+    workspaceId: string,
+    agentId: string,
+  ) {
+    const agent = await this.prismaService.agent.findFirst({
+      where: { id: agentId, workspaceId },
+      select: { id: true },
+    });
+    if (!agent) throw new NotFoundException("Agent not found");
+
+    const readySourceCount =
+      await this.prismaService.agentKnowledgeSource.count({
+        where: {
+          agentId,
+          knowledgeSource: { status: KnowledgeSourceStatus.READY },
+        },
+      });
+    if (readySourceCount === 0) {
+      throw new BadRequestException(
+        "This agent has no ready knowledge sources. Attach and train at least one source before chatting.",
+      );
+    }
+  }
+
   private async prepareChat(
     workspace: WorkspaceContext,
     agentId: string,
@@ -320,7 +350,6 @@ export class ChatService {
       },
       knowledgeSourceCount: retrieval.knowledgeSourceCount,
       candidateCount: retrieval.candidateCount,
-      warning: retrieval.warning,
     };
   }
 
