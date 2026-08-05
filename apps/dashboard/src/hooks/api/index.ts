@@ -30,3 +30,8 @@ export {
 } from "./use-knowledge";
 export { usePlaygroundChat } from "./use-playground-chat";
 export type { PlaygroundMessage } from "./use-playground-chat";
+export {
+  useConversations,
+  useConversation,
+  useBulkDeleteConversations,
+} from "./use-conversations";

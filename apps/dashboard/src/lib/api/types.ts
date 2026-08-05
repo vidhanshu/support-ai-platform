@@ -119,3 +119,42 @@ export type AgentKnowledgeSource = {
 export type AgentDetail = Agent & {
   knowledgeSources?: AgentKnowledgeSource[];
 };
+
+export type MessageRole = "USER" | "ASSISTANT" | "SYSTEM";
+
+export type ConversationMessage = {
+  id: string;
+  conversationId: string;
+  role: MessageRole | string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ConversationLastMessage = {
+  id: string;
+  role: MessageRole | string;
+  content: string;
+  createdAt: string;
+};
+
+export type ConversationListItem = {
+  id: string;
+  workspaceId: string;
+  agentId: string;
+  title: string | null;
+  createdAt: string;
+  updatedAt: string;
+  lastMessage: ConversationLastMessage | null;
+  messageCount: number;
+};
+
+export type ConversationDetail = {
+  id: string;
+  workspaceId: string;
+  agentId: string;
+  title: string | null;
+  createdAt: string;
+  updatedAt: string;
+  messages: ConversationMessage[];
+};

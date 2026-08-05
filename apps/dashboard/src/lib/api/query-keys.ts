@@ -40,4 +40,16 @@ export const queryKeys = {
     list: (workspaceId: string) =>
       [...queryKeys.documents.all(workspaceId), "list"] as const,
   },
+
+  conversations: {
+    all: (workspaceId: string) => ["conversations", workspaceId] as const,
+    listByAgent: (workspaceId: string, agentId: string) =>
+      [
+        ...queryKeys.conversations.all(workspaceId),
+        "list",
+        agentId,
+      ] as const,
+    detail: (workspaceId: string, id: string) =>
+      [...queryKeys.conversations.all(workspaceId), "detail", id] as const,
+  },
 } as const;

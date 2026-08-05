@@ -26,4 +26,9 @@ export type {
   ChatStreamEvent,
   StreamChatMessageInput,
 } from "./chat";
+export { conversationsApi } from "./conversations";
+export type {
+  BulkDeleteConversationsInput,
+  BulkDeleteConversationsResponse,
+} from "./conversations";
 export type * from "./types";
