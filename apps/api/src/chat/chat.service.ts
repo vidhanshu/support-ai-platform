@@ -288,7 +288,8 @@ export class ChatService {
     );
 
     const { messages, promptBuildMs } = this.promptBuilder.build({
-      systemPrompt: agent.systemPrompt,
+      generalPrompt: agent.generalPrompt,
+      guardrailsPrompt: agent.guardrailsPrompt,
       history: historyResult.messages,
       retrievedContext: context,
       userMessage: message,

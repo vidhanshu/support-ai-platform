@@ -2,7 +2,8 @@ import { Injectable } from "@nestjs/common";
 import type { ChatMessage } from "../llm/llm.types";
 
 export type PromptBuildInput = {
-  systemPrompt?: string | null;
+  generalPrompt?: string | null;
+  guardrailsPrompt?: string | null;
   /** Prior turns from ConversationContextBuilder (no current user message) */
   history: ChatMessage[];
   /**
@@ -18,6 +19,22 @@ export type PromptBuildResult = {
   promptBuildMs: number;
 };
 
+function combineAgentInstructions(
+  generalPrompt?: string | null,
+  guardrailsPrompt?: string | null,
+) {
+  const general =
+    generalPrompt?.trim() || "You are a helpful AI assistant.";
+  const guardrails = guardrailsPrompt?.trim();
+
+  if (!guardrails) return general;
+
+  return `${general}
+
+## Guardrails
+${guardrails}`;
+}
+
 /**
  * Assembles the final LLM message list.
  * Controllers/services must not concatenate prompt strings themselves.
@@ -27,8 +44,10 @@ export class PromptBuilder {
   build(input: PromptBuildInput): PromptBuildResult {
     const start = performance.now();
 
-    const base =
-      input.systemPrompt?.trim() || "You are a helpful AI assistant.";
+    const base = combineAgentInstructions(
+      input.generalPrompt,
+      input.guardrailsPrompt,
+    );
 
     const systemContent = `${base}
 

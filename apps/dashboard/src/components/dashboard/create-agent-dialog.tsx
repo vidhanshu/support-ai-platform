@@ -21,12 +21,12 @@ import {
   FieldLabel,
 } from "@repo/ui/components/field";
 import { Input } from "@repo/ui/components/input";
-import { Textarea } from "@repo/ui/components/textarea";
 import { useCreateAgent } from "@/hooks/api";
 import {
   createAgentSchema,
+  DEFAULT_AGENT_GENERAL_PROMPT,
+  DEFAULT_AGENT_GUARDRAILS_PROMPT,
   DEFAULT_AGENT_MODEL,
-  DEFAULT_AGENT_SYSTEM_PROMPT,
   DEFAULT_AGENT_TEMPERATURE,
   type CreateAgentValues,
 } from "@/lib/agents";
@@ -50,7 +50,6 @@ export function CreateAgentDialog({
     defaultValues: {
       name: "",
       description: "",
-      systemPrompt: DEFAULT_AGENT_SYSTEM_PROMPT,
     },
   });
 
@@ -59,7 +58,6 @@ export function CreateAgentDialog({
     form.reset({
       name: "",
       description: "",
-      systemPrompt: DEFAULT_AGENT_SYSTEM_PROMPT,
     });
   }, [open, form]);
 
@@ -68,8 +66,8 @@ export function CreateAgentDialog({
       {
         name: values.name,
         description: values.description?.trim() || undefined,
-        systemPrompt:
-          values.systemPrompt?.trim() || DEFAULT_AGENT_SYSTEM_PROMPT,
+        generalPrompt: DEFAULT_AGENT_GENERAL_PROMPT,
+        guardrailsPrompt: DEFAULT_AGENT_GUARDRAILS_PROMPT,
         model: DEFAULT_AGENT_MODEL,
         temperature: DEFAULT_AGENT_TEMPERATURE,
       },
@@ -79,7 +77,9 @@ export function CreateAgentDialog({
           onOpenChange(false);
           const slug = params.workspaceSlug;
           if (slug) {
-            router.push(`/dashboard/${slug}/agents/${agent.id}/playground`);
+            router.push(
+              `/dashboard/${slug}/agents/${agent.id}/build/instructions`,
+            );
           }
         },
         onError: (error) => {
@@ -95,8 +95,8 @@ export function CreateAgentDialog({
         <DialogHeader>
           <DialogTitle>Create agent</DialogTitle>
           <DialogDescription>
-            Set up a new AI support agent for this workspace. Model is fixed to{" "}
-            {DEFAULT_AGENT_MODEL}.
+            Set up a new AI support agent. You can refine instructions and model
+            settings next.
           </DialogDescription>
         </DialogHeader>
 
@@ -142,31 +142,6 @@ export function CreateAgentDialog({
                     aria-invalid={fieldState.invalid}
                   />
                   <FieldDescription>Optional</FieldDescription>
-                  {fieldState.invalid ? (
-                    <FieldError errors={[fieldState.error]} />
-                  ) : null}
-                </Field>
-              )}
-            />
-
-            <Controller
-              name="systemPrompt"
-              control={form.control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor="create-agent-system-prompt">
-                    System prompt
-                  </FieldLabel>
-                  <Textarea
-                    {...field}
-                    id="create-agent-system-prompt"
-                    rows={8}
-                    className="min-h-40 resize-y"
-                    aria-invalid={fieldState.invalid}
-                  />
-                  <FieldDescription>
-                    Instructions that shape how the agent responds.
-                  </FieldDescription>
                   {fieldState.invalid ? (
                     <FieldError errors={[fieldState.error]} />
                   ) : null}

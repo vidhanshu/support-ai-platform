@@ -7,7 +7,8 @@ import type { Agent } from "./types";
  */
 export type CreateAgentInput = {
   name: string;
-  systemPrompt?: string;
+  generalPrompt?: string;
+  guardrailsPrompt?: string;
   description?: string;
   model?: string;
   temperature?: number;

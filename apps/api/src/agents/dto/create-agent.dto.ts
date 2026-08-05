@@ -19,7 +19,12 @@ export class CreateAgentDto {
   @IsString()
   @IsOptional()
   @MaxLength(10000)
-  systemPrompt?: string;
+  generalPrompt?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(10000)
+  guardrailsPrompt?: string;
 
   @IsString()
   @IsOptional()

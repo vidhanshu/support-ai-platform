@@ -35,7 +35,8 @@ export type Agent = {
   workspaceId: string;
   name: string;
   description: string | null;
-  systemPrompt: string | null;
+  generalPrompt: string | null;
+  guardrailsPrompt: string | null;
   model: string | null;
   temperature: number | null;
   isActive: boolean;

@@ -14,6 +14,7 @@ export {
 export { useHealth } from "./use-health";
 export {
   useAgents,
+  useAgent,
   useCreateAgent,
   useUpdateAgent,
   useDeleteAgent,

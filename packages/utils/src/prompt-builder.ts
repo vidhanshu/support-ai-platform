@@ -5,10 +5,15 @@
  */
 export function buildRAGPrompt(
   context: string,
-  systemPrompt?: string | null,
+  generalPrompt?: string | null,
+  guardrailsPrompt?: string | null,
 ) {
-  const base =
-    systemPrompt?.trim() || "You are a helpful AI assistant.";
+  const general =
+    generalPrompt?.trim() || "You are a helpful AI assistant.";
+  const guardrails = guardrailsPrompt?.trim();
+  const base = guardrails
+    ? `${general}\n\n## Guardrails\n${guardrails}`
+    : general;
 
   return `${base}
 

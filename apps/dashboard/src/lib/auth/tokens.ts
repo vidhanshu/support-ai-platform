@@ -33,6 +33,10 @@ export function getWorkspaceId() {
 }
 
 export function setWorkspaceId(workspaceId: string) {
+  if (!workspaceId) {
+    clearWorkspaceId();
+    return;
+  }
   localStorage.setItem(WORKSPACE_ID_KEY, workspaceId);
 }
 
