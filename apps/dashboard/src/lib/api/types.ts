@@ -34,9 +34,11 @@ export type Agent = {
   id: string;
   workspaceId: string;
   name: string;
+  description: string | null;
   systemPrompt: string | null;
-  model: string;
-  temperature: number;
+  model: string | null;
+  temperature: number | null;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 };

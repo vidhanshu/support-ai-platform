@@ -1,6 +1,6 @@
 import {
   Button as ButtonPrimitive,
-  ButtonProps as ButtonPrimitiveProps,
+  type ButtonProps as ButtonPrimitiveProps,
 } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
 
@@ -46,7 +46,7 @@ const buttonVariants = cva(
   },
 );
 
-type ButtonProps = ButtonPrimitive.Props & VariantProps<typeof buttonVariants>;
+type ButtonProps = ButtonPrimitiveProps & VariantProps<typeof buttonVariants>;
 
 function Button({
   className,

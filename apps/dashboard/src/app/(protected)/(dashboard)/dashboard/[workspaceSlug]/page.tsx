@@ -1,4 +1,4 @@
-import { PlaceholderPage } from "@/components/common/placeholder-page";
+import { redirect, RedirectType } from "next/navigation";
 
 export default async function WorkspaceHomePage({
   params,
@@ -6,10 +6,5 @@ export default async function WorkspaceHomePage({
   params: Promise<{ workspaceSlug: string }>;
 }) {
   const { workspaceSlug } = await params;
-  return (
-    <PlaceholderPage
-      title="Agents"
-      description={`Workspace “${workspaceSlug}” — agent list placeholder.`}
-    />
-  );
+  return redirect(`/dashboard/${workspaceSlug}/agents`, RedirectType.replace);
 }

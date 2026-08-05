@@ -1,6 +1,6 @@
 "use client";
 
-import CreateWorkspaceCard from "@/components/workspace/create-workspace-card";
+import CreateWorkspaceCard from "@/components/dashboard/create-workspace-card";
 
 export default function CreateWorkspacePage() {
   return (

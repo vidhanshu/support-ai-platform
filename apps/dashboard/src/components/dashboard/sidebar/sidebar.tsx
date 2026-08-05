@@ -34,7 +34,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <WorkspaceSwitcher />
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="bg-background">
         <SidebarNav groups={groups} />
       </SidebarContent>
       <SidebarFooter>

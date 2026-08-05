@@ -66,7 +66,7 @@ export function getWorkspaceNav(workspaceSlug: string): SidebarNavGroup[] {
       items: [
         {
           title: "Agents",
-          url: base,
+          url: `${base}/agents`,
           icon: Bot,
           exact: true,
         },

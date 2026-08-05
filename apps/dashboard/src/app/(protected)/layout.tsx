@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { AuthGuard } from "@/components/auth/auth-guard";
-import { AppSidebar } from "@/components/workspace/sidebar/sidebar";
+import { AppSidebar } from "@/components/dashboard/sidebar/sidebar";
 import { Separator } from "@repo/ui/components/separator";
 import {
   SidebarInset,
