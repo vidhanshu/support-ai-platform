@@ -49,9 +49,11 @@ export class AgentsService {
             knowledgeSource: {
               include: {
                 document: true,
+                website: true,
               },
             },
           },
+          orderBy: { createdAt: "desc" },
         },
       },
     });

@@ -56,14 +56,13 @@ export class DocumentsService {
       },
     });
 
-    const uploadUrl = await this.storageService.generateUploadUrl(
-      objectKey,
-      contentType,
-    );
+    const { signedUrl, expiresIn } =
+      await this.storageService.generateUploadUrl(objectKey, contentType);
 
     return {
       document: knowledgeSource.document,
-      uploadUrl,
+      uploadUrl: signedUrl,
+      expiresIn,
     };
   }
 

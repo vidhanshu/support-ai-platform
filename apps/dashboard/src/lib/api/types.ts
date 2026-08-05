@@ -44,12 +44,66 @@ export type Agent = {
   updatedAt: string;
 };
 
+export type KnowledgeSourceType =
+  | "DOCUMENT"
+  | "QNA"
+  | "WEBSITE"
+  | "NOTION"
+  | "TICKET";
+
+export type KnowledgeSourceStatus =
+  | "PENDING"
+  | "PROCESSING"
+  | "READY"
+  | "FAILED";
+
+export type KnowledgeDocument = {
+  id: string;
+  originalFilename: string;
+  objectKey: string;
+  mimeType: string;
+  size: number;
+  uploadStatus: string;
+  knowledgeSourceId: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type KnowledgeWebsite = {
+  id: string;
+  rootUrl: string;
+  allowedHosts: string[];
+  maxPages: number;
+  crawlDepth: number;
+  pagesFound: number;
+  pagesCrawled: number;
+  lastCrawledAt: string | null;
+  errorMessage: string | null;
+  knowledgeSourceId: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type KnowledgeSource = {
   id: string;
   workspaceId: string;
   name: string;
-  type: string;
-  status: string;
+  type: KnowledgeSourceType | string;
+  status: KnowledgeSourceStatus | string;
   createdAt: string;
   updatedAt: string;
+  document?: KnowledgeDocument | null;
+  website?: KnowledgeWebsite | null;
+};
+
+export type AgentKnowledgeSource = {
+  id: string;
+  agentId: string;
+  knowledgeSourceId: string;
+  createdAt: string;
+  knowledgeSource: KnowledgeSource;
+};
+
+export type AgentDetail = Agent & {
+  knowledgeSources?: AgentKnowledgeSource[];
 };

@@ -67,6 +67,6 @@ export class WebsitesService {
       });
     }
 
-    return ks.website;
+    return ks;
   }
 }

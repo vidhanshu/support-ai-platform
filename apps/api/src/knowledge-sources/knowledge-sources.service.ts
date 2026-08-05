@@ -13,7 +13,8 @@ export class KnowledgeSourcesService {
   async findAll(workspace: WorkspaceContext) {
     return this.prisma.knowledgeSource.findMany({
       where: { workspaceId: workspace.id },
-      include: { document: true },
+      include: { document: true, website: true },
+      orderBy: { createdAt: "desc" },
     });
   }
 

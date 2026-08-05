@@ -13,9 +13,30 @@ export type CreateUploadUrlResponse = {
     originalFilename: string;
     mimeType: string;
     size: number;
+    knowledgeSourceId: string;
   };
+  /** Absolute MinIO/S3 PUT URL */
   uploadUrl: string;
+  expiresIn?: number;
 };
+
+function resolvePresignedUploadUrl(uploadUrl: unknown): string {
+  if (typeof uploadUrl === "string" && /^https?:\/\//i.test(uploadUrl)) {
+    return uploadUrl;
+  }
+
+  if (
+    uploadUrl &&
+    typeof uploadUrl === "object" &&
+    "signedUrl" in uploadUrl &&
+    typeof (uploadUrl as { signedUrl?: unknown }).signedUrl === "string"
+  ) {
+    const signedUrl = (uploadUrl as { signedUrl: string }).signedUrl;
+    if (/^https?:\/\//i.test(signedUrl)) return signedUrl;
+  }
+
+  throw new Error("Invalid presigned upload URL returned by the API");
+}
 
 /**
  * Document uploads:
@@ -54,18 +75,20 @@ export const documentsApi = {
     file: File,
     onUploadProgress?: (progress: UploadProgress) => void,
   ) => {
-    const { document, uploadUrl } = await documentsApi.createUploadUrl({
+    const payload = await documentsApi.createUploadUrl({
       originalName: file.name,
       contentType: file.type || "application/octet-stream",
       size: file.size,
     });
+
+    const uploadUrl = resolvePresignedUploadUrl(payload.uploadUrl);
 
     await documentsApi.uploadToPresignedUrl(
       uploadUrl,
       file,
       onUploadProgress,
     );
-    await documentsApi.complete(document.id);
-    return document;
+    await documentsApi.complete(payload.document.id);
+    return payload.document;
   },
 };

@@ -1,5 +1,5 @@
 import { apiClient } from "./client";
-import type { Agent } from "./types";
+import type { Agent, AgentDetail } from "./types";
 
 /**
  * Workspace-scoped agents API.
@@ -20,7 +20,7 @@ export const agentsApi = {
   list: () => apiClient.get<Agent[]>("/agents", { workspace: true }),
 
   get: (id: string) =>
-    apiClient.get<Agent>(`/agents/${id}`, { workspace: true }),
+    apiClient.get<AgentDetail>(`/agents/${id}`, { workspace: true }),
 
   create: (input: CreateAgentInput) =>
     apiClient.post<Agent>("/agents", input, { workspace: true }),

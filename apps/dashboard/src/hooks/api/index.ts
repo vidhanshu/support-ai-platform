@@ -19,3 +19,9 @@ export {
   useUpdateAgent,
   useDeleteAgent,
 } from "./use-agents";
+export {
+  useKnowledgeSources,
+  useCreateWebsite,
+  useUploadDocument,
+  useDeleteKnowledgeSource,
+} from "./use-knowledge";

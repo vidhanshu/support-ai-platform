@@ -33,6 +33,14 @@ export function useAgent(id: string | null | undefined) {
     queryKey: queryKeys.agents.detail(workspaceId ?? "none", id ?? "unknown"),
     queryFn: () => agentsApi.get(id!),
     enabled: isReady && Boolean(id),
+    refetchInterval: (query) => {
+      const sources = query.state.data?.knowledgeSources ?? [];
+      const busy = sources.some((item) => {
+        const status = item.knowledgeSource.status;
+        return status === "PENDING" || status === "PROCESSING";
+      });
+      return busy ? 5_000 : false;
+    },
   });
 }
 
