@@ -20,4 +20,10 @@ export type {
   CreateUploadUrlInput,
   CreateUploadUrlResponse,
 } from "./documents";
+export { streamChatMessage } from "./chat";
+export type {
+  ChatSource,
+  ChatStreamEvent,
+  StreamChatMessageInput,
+} from "./chat";
 export type * from "./types";

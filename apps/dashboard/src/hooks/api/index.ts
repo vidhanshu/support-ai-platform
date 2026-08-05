@@ -25,3 +25,5 @@ export {
   useUploadDocument,
   useDeleteKnowledgeSource,
 } from "./use-knowledge";
+export { usePlaygroundChat } from "./use-playground-chat";
+export type { PlaygroundMessage } from "./use-playground-chat";
