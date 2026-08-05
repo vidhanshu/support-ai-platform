@@ -24,8 +24,66 @@ import { toastApiError, toastSuccess } from "@/lib/toast";
 type AddFileSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  agentId: string;
+  /** When set, newly uploaded sources are also attached to this agent. */
+  agentId?: string;
 };
+
+function CircularProgress({
+  value,
+  size = 36,
+  strokeWidth = 3,
+}: {
+  value: number;
+  size?: number;
+  strokeWidth?: number;
+}) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const clamped = Math.min(100, Math.max(0, value));
+  const offset = circumference - (clamped / 100) * circumference;
+
+  return (
+    <div
+      className="relative inline-flex shrink-0 items-center justify-center"
+      style={{ width: size, height: size }}
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={clamped}
+      aria-label="Upload progress"
+    >
+      <svg
+        width={size}
+        height={size}
+        className="-rotate-90"
+        viewBox={`0 0 ${size} ${size}`}
+      >
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          className="stroke-muted"
+          strokeWidth={strokeWidth}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          className="stroke-primary transition-[stroke-dashoffset] duration-150 ease-out"
+          strokeWidth={strokeWidth}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+        />
+      </svg>
+      <span className="absolute text-[10px] font-medium tabular-nums">
+        {clamped}%
+      </span>
+    </div>
+  );
+}
 
 export function AddFileSheet({
   open,
@@ -36,8 +94,9 @@ export function AddFileSheet({
   const [file, setFile] = useState<File | null>(null);
   const [progress, setProgress] = useState(0);
   const upload = useUploadDocument(agentId);
+  const isUploading = upload.isPending;
 
-  const canSubmit = Boolean(file) && !upload.isPending;
+  const canSubmit = Boolean(file) && !isUploading;
 
   function reset() {
     setFile(null);
@@ -45,7 +104,14 @@ export function AddFileSheet({
     if (inputRef.current) inputRef.current.value = "";
   }
 
+  function handleOpenChange(next: boolean) {
+    if (!next && isUploading) return;
+    if (!next) reset();
+    onOpenChange(next);
+  }
+
   function pickFile(next: File | null) {
+    if (isUploading) return;
     if (!next) {
       setFile(null);
       return;
@@ -65,10 +131,12 @@ export function AddFileSheet({
       return;
     }
     setFile(next);
+    setProgress(0);
   }
 
   function onSubmit() {
-    if (!file) return;
+    if (!file || isUploading) return;
+    setProgress(0);
     upload.mutate(
       {
         file,
@@ -82,6 +150,7 @@ export function AddFileSheet({
         },
         onError: (error) => {
           toastApiError(error, "Unable to upload file.");
+          setProgress(0);
         },
       },
     );
@@ -95,19 +164,25 @@ export function AddFileSheet({
   return (
     <Sheet
       open={open}
-      onOpenChange={(next) => {
-        if (!next) reset();
-        onOpenChange(next);
-      }}
+      onOpenChange={handleOpenChange}
+      disablePointerDismissal={isUploading}
     >
       <SheetContent
         side="right"
+        showCloseButton={!isUploading}
         className="w-full gap-0 sm:max-w-xl data-[side=right]:sm:max-w-xl"
+        onKeyDown={(event) => {
+          if (isUploading && event.key === "Escape") {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        }}
       >
         <SheetHeader className="border-b">
           <SheetTitle>Add file</SheetTitle>
           <SheetDescription>
-            Upload a PDF to train this agent. Other formats are coming soon.
+            Upload a PDF to the workspace knowledge library. Other formats are
+            coming soon.
           </SheetDescription>
         </SheetHeader>
 
@@ -117,19 +192,22 @@ export function AddFileSheet({
             type="file"
             accept="application/pdf,.pdf"
             className="hidden"
+            disabled={isUploading}
             onChange={(event) => pickFile(event.target.files?.[0] ?? null)}
           />
 
           <button
             type="button"
+            disabled={isUploading}
             onClick={() => inputRef.current?.click()}
             onDragOver={(event) => event.preventDefault()}
             onDrop={(event) => {
               event.preventDefault();
+              if (isUploading) return;
               pickFile(event.dataTransfer.files?.[0] ?? null);
             }}
             className={cn(
-              "flex min-h-56 flex-col items-center justify-center gap-3 rounded-xl border border-dashed px-6 py-10 text-center transition-colors hover:bg-muted/40",
+              "flex min-h-56 flex-col items-center justify-center gap-3 rounded-xl border border-dashed px-6 py-10 text-center transition-colors hover:bg-muted/40 disabled:pointer-events-none disabled:opacity-60",
               file && "border-primary/40 bg-muted/20",
             )}
           >
@@ -138,7 +216,9 @@ export function AddFileSheet({
             </span>
             <div>
               <p className="font-medium">
-                {file ? "File ready to upload" : "Click here or drag files to upload"}
+                {file
+                  ? "File ready to upload"
+                  : "Click here or drag files to upload"}
               </p>
               <p className="mt-1 text-sm text-muted-foreground">{helper}</p>
             </div>
@@ -159,11 +239,6 @@ export function AddFileSheet({
                 </span>
               ))}
             </div>
-            {upload.isPending ? (
-              <p className="text-sm text-muted-foreground">
-                Uploading… {progress}%
-              </p>
-            ) : null}
           </button>
 
           <p className="flex items-start gap-2 text-sm text-muted-foreground">
@@ -173,17 +248,31 @@ export function AddFileSheet({
           </p>
         </div>
 
-        <SheetFooter className="border-t sm:flex-row sm:justify-between">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={reset}
-            disabled={upload.isPending || !file}
-          >
-            Reset
-          </Button>
+        <SheetFooter className="border-t sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-h-9 items-center gap-3">
+            {isUploading ? (
+              <>
+                <CircularProgress value={progress} />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">Uploading…</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {file?.name ?? "Preparing upload"}
+                  </p>
+                </div>
+              </>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={reset}
+                disabled={!file}
+              >
+                Reset
+              </Button>
+            )}
+          </div>
           <Button type="button" onClick={onSubmit} disabled={!canSubmit}>
-            {upload.isPending ? "Uploading…" : "Add file source"}
+            {isUploading ? "Uploading…" : "Add file source"}
           </Button>
         </SheetFooter>
       </SheetContent>

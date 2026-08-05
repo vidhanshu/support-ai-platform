@@ -24,6 +24,9 @@ export {
   useCreateWebsite,
   useUploadDocument,
   useDeleteKnowledgeSource,
+  useAttachKnowledgeSource,
+  useDetachKnowledgeSource,
+  useAttachSourceToAgents,
 } from "./use-knowledge";
 export { usePlaygroundChat } from "./use-playground-chat";
 export type { PlaygroundMessage } from "./use-playground-chat";

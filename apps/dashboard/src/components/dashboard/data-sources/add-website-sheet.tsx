@@ -38,7 +38,8 @@ type FormValues = z.infer<typeof schema>;
 type AddWebsiteSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  agentId: string;
+  /** When set, newly created sources are also attached to this agent. */
+  agentId?: string;
 };
 
 export function AddWebsiteSheet({
@@ -90,7 +91,7 @@ export function AddWebsiteSheet({
         <SheetHeader className="border-b">
           <SheetTitle>Add website</SheetTitle>
           <SheetDescription>
-            Crawl a website and attach the pages to this agent.
+            Crawl a website into the workspace knowledge library.
           </SheetDescription>
         </SheetHeader>
 

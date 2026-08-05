@@ -3,9 +3,12 @@
 import {
   FileText,
   Globe,
+  Link2,
   MoreHorizontal,
   Trash2,
+  Unlink,
 } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@repo/ui/components/button";
 import {
   DropdownMenu,
@@ -21,8 +24,14 @@ import { formatBytes, formatSourceDate } from "@/lib/knowledge/constants";
 type SourceListProps = {
   sources: KnowledgeSource[];
   isLoading?: boolean;
+  emptyMessage?: string;
+  /** Workspace slug — used to link agent chips when showing attachments. */
+  workspaceSlug?: string;
+  showAgents?: boolean;
   onDelete?: (id: string) => void;
-  isDeleting?: boolean;
+  onDetach?: (id: string) => void;
+  onAttachToAgents?: (source: KnowledgeSource) => void;
+  isMutating?: boolean;
 };
 
 function statusClass(status: string) {
@@ -56,8 +65,13 @@ function sourceMeta(source: KnowledgeSource) {
 export function SourceList({
   sources,
   isLoading,
+  emptyMessage = "No data sources yet.",
+  workspaceSlug,
+  showAgents = false,
   onDelete,
-  isDeleting,
+  onDetach,
+  onAttachToAgents,
+  isMutating,
 }: SourceListProps) {
   if (isLoading) {
     return (
@@ -71,7 +85,7 @@ export function SourceList({
   if (!sources.length) {
     return (
       <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
-        No data sources yet. Add a PDF or website to get started.
+        {emptyMessage}
       </div>
     );
   }
@@ -84,6 +98,8 @@ export function SourceList({
           source.document?.originalFilename ||
           source.website?.rootUrl ||
           source.name;
+        const agents = source.agents ?? [];
+        const hasMenu = Boolean(onDelete || onDetach || onAttachToAgents);
 
         return (
           <li
@@ -103,6 +119,34 @@ export function SourceList({
               <p className="mt-1 truncate text-sm text-muted-foreground">
                 {sourceMeta(source)}
               </p>
+              {showAgents ? (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {agents.length === 0 ? (
+                    <span className="text-xs text-muted-foreground">
+                      Not linked to any agent
+                    </span>
+                  ) : (
+                    agents.map((link) => {
+                      const href =
+                        workspaceSlug
+                          ? `/dashboard/${workspaceSlug}/agents/${link.agent.id}/build/data-sources`
+                          : undefined;
+                      const chip = (
+                        <span className="inline-flex items-center rounded-full border bg-background px-2 py-0.5 text-xs">
+                          {link.agent.name}
+                        </span>
+                      );
+                      return href ? (
+                        <Link key={link.id} href={href} className="hover:opacity-80">
+                          {chip}
+                        </Link>
+                      ) : (
+                        <span key={link.id}>{chip}</span>
+                      );
+                    })
+                  )}
+                </div>
+              ) : null}
             </div>
 
             <div className="flex shrink-0 items-center gap-2">
@@ -118,7 +162,7 @@ export function SourceList({
                 {isWebsite ? "Website" : "File"}
               </span>
 
-              {onDelete ? (
+              {hasMenu ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger
                     render={<Button variant="ghost" size="icon-sm" />}
@@ -126,15 +170,35 @@ export function SourceList({
                     <MoreHorizontal />
                     <span className="sr-only">Source actions</span>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      variant="destructive"
-                      disabled={isDeleting}
-                      onClick={() => onDelete(source.id)}
-                    >
-                      <Trash2 />
-                      Delete
-                    </DropdownMenuItem>
+                  <DropdownMenuContent align="end" className="min-w-[200px]">
+                    {onAttachToAgents ? (
+                      <DropdownMenuItem
+                        disabled={isMutating}
+                        onClick={() => onAttachToAgents(source)}
+                      >
+                        <Link2 />
+                        Attach to agents
+                      </DropdownMenuItem>
+                    ) : null}
+                    {onDetach ? (
+                      <DropdownMenuItem
+                        disabled={isMutating}
+                        onClick={() => onDetach(source.id)}
+                      >
+                        <Unlink />
+                        Detach
+                      </DropdownMenuItem>
+                    ) : null}
+                    {onDelete ? (
+                      <DropdownMenuItem
+                        variant="destructive"
+                        disabled={isMutating}
+                        onClick={() => onDelete(source.id)}
+                      >
+                        <Trash2 />
+                        Delete
+                      </DropdownMenuItem>
+                    ) : null}
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : null}

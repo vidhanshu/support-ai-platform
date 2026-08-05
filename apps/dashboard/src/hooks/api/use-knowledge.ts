@@ -11,6 +11,25 @@ import {
 import { useActiveWorkspace } from "@/hooks/use-active-workspace";
 import type { UploadProgress } from "@/lib/api/client";
 
+function invalidateKnowledgeAndAgents(
+  queryClient: ReturnType<typeof useQueryClient>,
+  workspaceId: string | null,
+  agentId?: string,
+) {
+  if (!workspaceId) return;
+  void queryClient.invalidateQueries({
+    queryKey: queryKeys.knowledge.all(workspaceId),
+  });
+  void queryClient.invalidateQueries({
+    queryKey: queryKeys.agents.all(workspaceId),
+  });
+  if (agentId) {
+    void queryClient.invalidateQueries({
+      queryKey: queryKeys.agents.detail(workspaceId, agentId),
+    });
+  }
+}
+
 export function useKnowledgeSources() {
   const { workspaceId, isReady } = useActiveWorkspace();
 
@@ -18,6 +37,14 @@ export function useKnowledgeSources() {
     queryKey: queryKeys.knowledge.list(workspaceId ?? "none"),
     queryFn: () => knowledgeApi.list(),
     enabled: isReady,
+    refetchInterval: (query) => {
+      const sources = query.state.data ?? [];
+      const busy = sources.some(
+        (source) =>
+          source.status === "PENDING" || source.status === "PROCESSING",
+      );
+      return busy ? 5_000 : false;
+    },
   });
 }
 
@@ -34,15 +61,7 @@ export function useCreateWebsite(agentId?: string) {
       return source;
     },
     onSuccess: () => {
-      if (!workspaceId) return;
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.knowledge.all(workspaceId),
-      });
-      if (agentId) {
-        void queryClient.invalidateQueries({
-          queryKey: queryKeys.agents.detail(workspaceId, agentId),
-        });
-      }
+      invalidateKnowledgeAndAgents(queryClient, workspaceId, agentId);
     },
   });
 }
@@ -71,36 +90,72 @@ export function useUploadDocument(agentId?: string) {
     onSuccess: () => {
       if (!workspaceId) return;
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.knowledge.all(workspaceId),
-      });
-      void queryClient.invalidateQueries({
         queryKey: queryKeys.documents.all(workspaceId),
       });
-      if (agentId) {
-        void queryClient.invalidateQueries({
-          queryKey: queryKeys.agents.detail(workspaceId, agentId),
-        });
-      }
+      invalidateKnowledgeAndAgents(queryClient, workspaceId, agentId);
     },
   });
 }
 
-export function useDeleteKnowledgeSource(agentId?: string) {
+export function useDeleteKnowledgeSource() {
   const queryClient = useQueryClient();
   const { workspaceId } = useActiveWorkspace();
 
   return useMutation({
     mutationFn: (id: string) => knowledgeApi.remove(id),
     onSuccess: () => {
-      if (!workspaceId) return;
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.knowledge.all(workspaceId),
-      });
-      if (agentId) {
-        void queryClient.invalidateQueries({
-          queryKey: queryKeys.agents.detail(workspaceId, agentId),
-        });
-      }
+      invalidateKnowledgeAndAgents(queryClient, workspaceId);
+    },
+  });
+}
+
+export function useAttachKnowledgeSource(agentId: string) {
+  const queryClient = useQueryClient();
+  const { workspaceId } = useActiveWorkspace();
+
+  return useMutation({
+    mutationFn: (knowledgeSourceId: string) =>
+      agentsApi.attachKnowledgeSource(agentId, knowledgeSourceId),
+    onSuccess: () => {
+      invalidateKnowledgeAndAgents(queryClient, workspaceId, agentId);
+    },
+  });
+}
+
+export function useDetachKnowledgeSource(agentId: string) {
+  const queryClient = useQueryClient();
+  const { workspaceId } = useActiveWorkspace();
+
+  return useMutation({
+    mutationFn: (knowledgeSourceId: string) =>
+      agentsApi.detachKnowledgeSource(agentId, knowledgeSourceId),
+    onSuccess: () => {
+      invalidateKnowledgeAndAgents(queryClient, workspaceId, agentId);
+    },
+  });
+}
+
+/** Attach one knowledge source to multiple agents (workspace UI). */
+export function useAttachSourceToAgents() {
+  const queryClient = useQueryClient();
+  const { workspaceId } = useActiveWorkspace();
+
+  return useMutation({
+    mutationFn: async ({
+      knowledgeSourceId,
+      agentIds,
+    }: {
+      knowledgeSourceId: string;
+      agentIds: string[];
+    }) => {
+      await Promise.all(
+        agentIds.map((agentId) =>
+          agentsApi.attachKnowledgeSource(agentId, knowledgeSourceId),
+        ),
+      );
+    },
+    onSuccess: () => {
+      invalidateKnowledgeAndAgents(queryClient, workspaceId);
     },
   });
 }

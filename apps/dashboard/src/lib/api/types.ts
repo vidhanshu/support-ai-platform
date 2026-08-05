@@ -84,6 +84,17 @@ export type KnowledgeWebsite = {
   updatedAt: string;
 };
 
+export type KnowledgeSourceAgentLink = {
+  id: string;
+  agentId: string;
+  knowledgeSourceId: string;
+  createdAt: string;
+  agent: {
+    id: string;
+    name: string;
+  };
+};
+
 export type KnowledgeSource = {
   id: string;
   workspaceId: string;
@@ -94,6 +105,7 @@ export type KnowledgeSource = {
   updatedAt: string;
   document?: KnowledgeDocument | null;
   website?: KnowledgeWebsite | null;
+  agents?: KnowledgeSourceAgentLink[];
 };
 
 export type AgentKnowledgeSource = {

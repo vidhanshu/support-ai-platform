@@ -5,6 +5,7 @@ import {
   Bot,
   ChartNoAxesColumn,
   Contact,
+  Database,
   Gift,
   HelpCircle,
   Play,
@@ -69,6 +70,11 @@ export function getWorkspaceNav(workspaceSlug: string): SidebarNavGroup[] {
           url: `${base}/agents`,
           icon: Bot,
           exact: true,
+        },
+        {
+          title: "Data sources",
+          url: `${base}/data-sources`,
+          icon: Database,
         },
         {
           title: "Usage",
