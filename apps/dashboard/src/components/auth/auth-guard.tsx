@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AUTH_LOGIN_PATH, hasSession } from "@/lib/auth/tokens";
 import { LoaderCircle } from "lucide-react";
 
@@ -15,16 +15,20 @@ type AuthGuardProps = {
 export function AuthGuard({ children }: AuthGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (!hasSession()) {
-      const next = encodeURIComponent(pathname);
+      const search = searchParams.toString();
+      const next = encodeURIComponent(
+        search ? `${pathname}?${search}` : pathname,
+      );
       router.replace(`${AUTH_LOGIN_PATH}&next=${next}`);
       return;
     }
     setReady(true);
-  }, [pathname, router]);
+  }, [pathname, router, searchParams]);
 
   if (!ready) {
     return (

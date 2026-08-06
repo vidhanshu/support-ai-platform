@@ -48,6 +48,17 @@ export class InvitationsController {
     return this.invitationsService.accept(user, token);
   }
 
+  @Post(":id/resend")
+  @RequireWorkspace()
+  @WorkspaceRoles(WorkspaceRole.ADMIN, WorkspaceRole.OWNER)
+  resend(
+    @CurrentWorkspace() workspace: WorkspaceContext,
+    @CurrentUser() user: JwtUser,
+    @Param("id") id: string,
+  ) {
+    return this.invitationsService.resend(workspace, user, id);
+  }
+
   @Delete(":id")
   @RequireWorkspace()
   @WorkspaceRoles(WorkspaceRole.ADMIN, WorkspaceRole.OWNER)

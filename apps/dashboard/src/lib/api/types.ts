@@ -12,18 +12,53 @@ export type AuthTokensResponse = {
   refreshToken: string;
 };
 
+export type WorkspaceRole = "OWNER" | "ADMIN" | "MEMBER";
+
 export type Workspace = {
   id: string;
   name: string;
   slug: string;
   createdAt: string;
   updatedAt: string;
+  role?: WorkspaceRole | null;
   _count?: {
     members: number;
   };
 };
 
-export type WorkspaceRole = "OWNER" | "ADMIN" | "MEMBER";
+export type WorkspaceMember = {
+  id: string;
+  workspaceId: string;
+  userId: string;
+  role: WorkspaceRole;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    id: string;
+    email: string;
+    name: string | null;
+  };
+};
+
+export type WorkspaceInvitation = {
+  id: string;
+  email: string;
+  role: WorkspaceRole;
+  workspaceId: string;
+  invitedById: string;
+  token: string;
+  expiresAt: string;
+  acceptedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AcceptInvitationResponse = {
+  workspaceId: string;
+  name: string;
+  slug: string;
+  role: WorkspaceRole;
+};
 
 export type HealthResponse = {
   status: string;

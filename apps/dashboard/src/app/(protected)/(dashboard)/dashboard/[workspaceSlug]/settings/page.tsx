@@ -1,5 +1,5 @@
-import { PlaceholderPage } from "@/components/common/placeholder-page";
+import { GeneralSettingsView } from "@/components/dashboard/settings/general-settings-view";
 
 export default function Page() {
-  return <PlaceholderPage title="Workspace settings — General" />;
+  return <GeneralSettingsView />;
 }

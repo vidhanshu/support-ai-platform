@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
 } from "@nestjs/common";
@@ -16,6 +17,8 @@ import { WorkspaceRoles } from "../common/decorators/workspace-roles.decorate";
 import { WorkspaceRole } from "@repo/database";
 import { RequireWorkspace } from "../common/decorators/workspace-protected.decorator";
 import { Authenticated } from "../common/decorators/authenticated.decorator";
+import { CurrentWorkspace } from "./decorators/current-workspace.decorator";
+import type { WorkspaceContext } from "../common/interfaces/request.interface";
 
 @Controller("workspaces")
 export class WorkspaceController {
@@ -54,5 +57,27 @@ export class WorkspaceController {
   @Authenticated()
   async deleteById(@CurrentUser() user: JwtUser, @Param("id") id: string) {
     return this.workspaceService.deleteById(user, id);
+  }
+}
+
+@Controller("members")
+export class MembersController {
+  constructor(private readonly workspaceService: WorkspaceService) {}
+
+  @Get()
+  @RequireWorkspace()
+  list(@CurrentWorkspace() workspace: WorkspaceContext) {
+    return this.workspaceService.listMembers(workspace);
+  }
+
+  @Delete(":id")
+  @RequireWorkspace()
+  @WorkspaceRoles(WorkspaceRole.ADMIN, WorkspaceRole.OWNER)
+  remove(
+    @CurrentWorkspace() workspace: WorkspaceContext,
+    @CurrentUser() user: JwtUser,
+    @Param("id", ParseUUIDPipe) id: string,
+  ) {
+    return this.workspaceService.removeMember(workspace, user, id);
   }
 }

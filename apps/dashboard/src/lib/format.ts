@@ -1,3 +1,13 @@
+/** Short calendar date (e.g. "Jul 27, 2026"). */
+export function formatShortDate(value: string | Date) {
+  const date = value instanceof Date ? value : new Date(value);
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
 /** Compact relative time for chat logs (e.g. "44 minutes ago"). */
 export function formatRelativeTime(value: string | Date) {
   const date = value instanceof Date ? value : new Date(value);

@@ -6,7 +6,8 @@ export type CreateWorkspaceInput = {
 };
 
 export type UpdateWorkspaceInput = {
-  name: string;
+  name?: string;
+  slug?: string;
 };
 
 export const workspacesApi = {

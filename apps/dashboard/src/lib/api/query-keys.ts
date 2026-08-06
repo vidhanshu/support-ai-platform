@@ -19,6 +19,18 @@ export const queryKeys = {
     detail: (id: string) => [...queryKeys.workspaces.all, "detail", id] as const,
   },
 
+  members: {
+    all: (workspaceId: string) => ["members", workspaceId] as const,
+    list: (workspaceId: string) =>
+      [...queryKeys.members.all(workspaceId), "list"] as const,
+  },
+
+  invitations: {
+    all: (workspaceId: string) => ["invitations", workspaceId] as const,
+    list: (workspaceId: string) =>
+      [...queryKeys.invitations.all(workspaceId), "list"] as const,
+  },
+
   agents: {
     all: (workspaceId: string) => ["agents", workspaceId] as const,
     list: (workspaceId: string) =>

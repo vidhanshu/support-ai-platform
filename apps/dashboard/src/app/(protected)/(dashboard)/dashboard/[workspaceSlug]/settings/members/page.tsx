@@ -1,5 +1,5 @@
-import { PlaceholderPage } from "@/components/common/placeholder-page";
+import { MembersSettingsView } from "@/components/dashboard/settings/members-settings-view";
 
 export default function Page() {
-  return <PlaceholderPage title="Workspace settings — Members" />;
+  return <MembersSettingsView />;
 }

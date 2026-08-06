@@ -39,6 +39,8 @@ export const ENV_KEYS = {
   REDIS_PORT: "REDIS_PORT",
   RESEND_API_KEY: "RESEND_API_KEY",
   EMAIL_FROM: "EMAIL_FROM",
+  /** `resend` (default) or `console` for local dev without a domain */
+  EMAIL_PROVIDER: "EMAIL_PROVIDER",
   APP_WEB_URL: "APP_WEB_URL",
 } as const;
 

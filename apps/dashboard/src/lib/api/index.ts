@@ -10,6 +10,9 @@ export type {
   CreateWorkspaceInput,
   UpdateWorkspaceInput,
 } from "./workspaces";
+export { membersApi } from "./members";
+export { invitationsApi } from "./invitations";
+export type { CreateInvitationInput } from "./invitations";
 export { healthApi } from "./health";
 export { agentsApi } from "./agents";
 export type { CreateAgentInput, UpdateAgentInput } from "./agents";

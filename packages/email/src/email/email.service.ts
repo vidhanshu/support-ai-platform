@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger, Optional } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { ENV_KEYS } from "@repo/config";
 import { Resend } from "resend";
@@ -15,15 +15,39 @@ import type {
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
   private readonly from: string;
+  private readonly provider: "resend" | "console";
 
   constructor(
-    @Inject("RESEND_CLIENT") private readonly resend: Resend,
     configService: ConfigService,
+    @Optional() @Inject("RESEND_CLIENT") private readonly resend: Resend | null,
   ) {
-    this.from = configService.getOrThrow<string>(ENV_KEYS.EMAIL_FROM);
+    this.from = configService.get<string>(ENV_KEYS.EMAIL_FROM) ?? "Support AI <dev@localhost>";
+    const raw = (
+      configService.get<string>(ENV_KEYS.EMAIL_PROVIDER) ?? "resend"
+    ).toLowerCase();
+    this.provider = raw === "console" ? "console" : "resend";
   }
 
   async sendEmail(input: SendEmailInput) {
+    if (this.provider === "console") {
+      this.logger.log(
+        [
+          "[console email]",
+          `from=${this.from}`,
+          `to=${input.to}`,
+          `subject=${input.subject}`,
+          input.html,
+        ].join("\n"),
+      );
+      return { id: `console-${Date.now()}` };
+    }
+
+    if (!this.resend) {
+      throw new Error(
+        "EMAIL_PROVIDER=resend but RESEND_API_KEY is not configured",
+      );
+    }
+
     const result = await this.resend.emails.send({
       from: this.from,
       to: input.to,

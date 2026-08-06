@@ -140,7 +140,7 @@ export class InvitationsService {
       );
 
     try {
-      await this.prisma.$transaction([
+      const [, , workspace] = await this.prisma.$transaction([
         this.prisma.workspaceMember.create({
           data: {
             workspaceId: invitation.workspaceId,
@@ -152,7 +152,18 @@ export class InvitationsService {
           where: { id: invitation.id },
           data: { acceptedAt: new Date() },
         }),
+        this.prisma.workspace.findUniqueOrThrow({
+          where: { id: invitation.workspaceId },
+          select: { id: true, name: true, slug: true },
+        }),
       ]);
+
+      return {
+        workspaceId: workspace.id,
+        name: workspace.name,
+        slug: workspace.slug,
+        role: invitation.role,
+      };
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -168,21 +179,70 @@ export class InvitationsService {
     return this.prisma.workspaceInvitation.findMany({
       where: {
         workspaceId: workspace.id,
+        acceptedAt: null,
       },
+      orderBy: { createdAt: "desc" },
     });
   }
 
+  async resend(
+    workspace: WorkspaceContext,
+    user: JwtUser,
+    id: string,
+  ) {
+    const invitation = await this.prisma.workspaceInvitation.findFirst({
+      where: {
+        id,
+        workspaceId: workspace.id,
+        acceptedAt: null,
+      },
+    });
+    if (!invitation) throw new NotFoundException("No invitation found");
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = dayjs()
+      .add(INVITATION_CONFIGS.EXPIRATION_DAYS, "day")
+      .toDate();
+
+    const updated = await this.prisma.workspaceInvitation.update({
+      where: { id: invitation.id },
+      data: { token, expiresAt },
+    });
+
+    const appWebUrl = this.configService.getOrThrow<string>(
+      ENV_KEYS.APP_WEB_URL,
+    );
+    const inviteUrl = `${appWebUrl.replace(/\/$/, "")}/invitations/accept?token=${token}`;
+
+    await this.emailQueue.add(
+      JOB_NAMES.SEND_EMAIL,
+      {
+        kind: "workspace_invite",
+        to: invitation.email,
+        workspaceName: workspace.name,
+        inviterEmail: user.email,
+        role: invitation.role as string,
+        inviteUrl,
+      },
+      {
+        attempts: 3,
+        backoff: { type: "exponential", delay: 2000 },
+        removeOnComplete: 100,
+        removeOnFail: 50,
+      },
+    );
+
+    return updated;
+  }
+
   async remove(workspace: WorkspaceContext, id: string) {
-    const invitation = await this.prisma.workspaceInvitation.findUnique({
-      where: { id },
+    const invitation = await this.prisma.workspaceInvitation.findFirst({
+      where: { id, workspaceId: workspace.id },
     });
     if (!invitation) throw new NotFoundException("No invitation found");
 
     return this.prisma.workspaceInvitation.delete({
-      where: {
-        id,
-        workspaceId: workspace.id,
-      },
+      where: { id: invitation.id },
     });
   }
 }

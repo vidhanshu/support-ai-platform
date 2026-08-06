@@ -3,6 +3,10 @@ import { customAlphabet } from "nanoid";
 
 const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 5);
 
+export const normalizeSlug = (value: string) => {
+  return slugify(value, { lower: true, strict: true });
+};
+
 export const generateSlug = (name: string) => {
-  return `${slugify(name, { lower: true, strict: true })}-${nanoid(5)}`;
+  return `${normalizeSlug(name)}-${nanoid(5)}`;
 };
