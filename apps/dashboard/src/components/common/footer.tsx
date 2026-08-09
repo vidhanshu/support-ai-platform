@@ -4,7 +4,7 @@ const links = {
   Product: [
     { label: "Solutions", href: "#solutions" },
     { label: "How it works", href: "#how-it-works" },
-    { label: "Pricing", href: "/auth" },
+    { label: "Pricing", href: "/pricing" },
   ],
   Company: [
     { label: "About", href: "#" },

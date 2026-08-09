@@ -134,21 +134,12 @@ export function Nav() {
               </NavigationMenuContent>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <NavigationMenuTrigger>Resources</NavigationMenuTrigger>
-              <NavigationMenuContent>
-                <ul>
-                  {resources.map((resource) => (
-                    <ListItem
-                      key={resource.title}
-                      href={resource.href}
-                      title={resource.title}
-                      icon={resource.icon}
-                    >
-                      {resource.description}
-                    </ListItem>
-                  ))}
-                </ul>
-              </NavigationMenuContent>
+              <NavigationMenuLink
+                className="h-9 px-2.5 py-1.5 font-medium"
+                render={<Link href="/pricing" />}
+              >
+                Pricing
+              </NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
               <NavigationMenuTrigger>Resources</NavigationMenuTrigger>
