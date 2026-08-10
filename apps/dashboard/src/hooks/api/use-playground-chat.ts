@@ -5,6 +5,7 @@ import {
   streamChatMessage,
   type ChatSource,
 } from "@/lib/api/chat";
+import { toastApiError } from "@/lib/toast";
 
 export type PlaygroundMessage = {
   id: string;
@@ -112,6 +113,7 @@ export function usePlaygroundChat(agentId: string) {
         const message =
           err instanceof Error ? err.message : "Unable to send message.";
         setError(message);
+        toastApiError(err, "Unable to send message.");
         setMessages((prev) =>
           prev.map((item) =>
             item.id === assistantId

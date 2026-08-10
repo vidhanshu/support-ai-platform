@@ -216,6 +216,14 @@ function createApiClient(): AxiosInstance {
 
 const axiosClient = createApiClient();
 
+/**
+ * Shared session refresh for non-Axios callers (e.g. SSE `fetch` in chat).
+ * Dedupes concurrent refresh attempts with the Axios interceptor.
+ */
+export async function refreshSession(): Promise<boolean> {
+  return refreshAccessToken(axiosClient);
+}
+
 function buildConfig(
   options: ApiRequestOptions = {},
 ): AxiosRequestConfig & AppAxiosConfig {

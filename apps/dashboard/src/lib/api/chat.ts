@@ -1,4 +1,6 @@
 import { API_BASE_URL, API_HEADERS } from "./constants";
+import { refreshSession } from "./client";
+import { ApiError, extractApiErrorCode, extractApiErrorMessage } from "./errors";
 import { getAccessToken, getWorkspaceId } from "@/lib/auth/tokens";
 
 export type ChatSource = {
@@ -79,11 +81,7 @@ function parseSseChunk(buffer: string): {
   return { events, rest };
 }
 
-/**
- * Streams a chat reply via SSE (`POST /agents/:agentId/chat`).
- * Uses fetch (not Axios) so we can read the response body as a stream.
- */
-export async function streamChatMessage(input: StreamChatMessageInput) {
+function buildChatHeaders(): HeadersInit {
   const accessToken = getAccessToken();
   const workspaceId = getWorkspaceId();
 
@@ -94,38 +92,65 @@ export async function streamChatMessage(input: StreamChatMessageInput) {
     throw new Error("No workspace selected.");
   }
 
-  const response = await fetch(
-    `${API_BASE_URL}/agents/${input.agentId}/chat`,
-    {
+  return {
+    Accept: "text/event-stream",
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${accessToken}`,
+    [API_HEADERS.WORKSPACE_ID]: workspaceId,
+  };
+}
+
+async function throwChatHttpError(response: Response): Promise<never> {
+  let message = `Chat failed (${response.status})`;
+  let code: string | undefined;
+  let details: unknown;
+  try {
+    const payload = await response.json();
+    details = payload;
+    message = extractApiErrorMessage(payload, message);
+    code = extractApiErrorCode(payload);
+  } catch {
+    // keep default
+  }
+  throw new ApiError(message, response.status, details, code);
+}
+
+/**
+ * Streams a chat reply via SSE (`POST /agents/:agentId/chat`).
+ * Uses fetch (not Axios) so we can read the response body as a stream.
+ * On 401, refreshes the session once and retries (Axios does the same).
+ */
+export async function streamChatMessage(input: StreamChatMessageInput) {
+  const body = JSON.stringify({
+    message: input.message,
+    ...(input.conversationId ? { conversationId: input.conversationId } : {}),
+  });
+
+  const url = `${API_BASE_URL}/agents/${input.agentId}/chat`;
+
+  let response = await fetch(url, {
+    method: "POST",
+    headers: buildChatHeaders(),
+    body,
+    signal: input.signal,
+  });
+
+  if (response.status === 401) {
+    const refreshed = await refreshSession();
+    if (!refreshed) {
+      await throwChatHttpError(response);
+    }
+
+    response = await fetch(url, {
       method: "POST",
-      headers: {
-        Accept: "text/event-stream",
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-        [API_HEADERS.WORKSPACE_ID]: workspaceId,
-      },
-      body: JSON.stringify({
-        message: input.message,
-        ...(input.conversationId
-          ? { conversationId: input.conversationId }
-          : {}),
-      }),
+      headers: buildChatHeaders(),
+      body,
       signal: input.signal,
-    },
-  );
+    });
+  }
 
   if (!response.ok) {
-    let message = `Chat failed (${response.status})`;
-    try {
-      const payload = (await response.json()) as {
-        message?: string;
-        error?: { message?: string };
-      };
-      message = payload.error?.message || payload.message || message;
-    } catch {
-      // keep default
-    }
-    throw new Error(message);
+    await throwChatHttpError(response);
   }
 
   if (!response.body) {

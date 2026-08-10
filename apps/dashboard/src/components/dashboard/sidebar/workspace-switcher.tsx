@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronsUpDown, Plus } from "lucide-react";
+import { Badge } from "@repo/ui/components/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,14 +19,23 @@ import {
 } from "@repo/ui/components/sidebar";
 import Link from "next/link";
 import InitialsAvatar from "@/components/common/initials-avatar";
+import { useBilling } from "@/hooks/api";
 import { useActiveWorkspace } from "@/hooks/use-active-workspace";
+import { PLAN_DISPLAY, type PlanId } from "@/lib/billing/plans";
+import { cn } from "@repo/ui/lib/utils";
 
 export function WorkspaceSwitcher() {
   const { isMobile } = useSidebar();
-  const { workspace: activeWorkspace, workspaces, isLoading } =
-    useActiveWorkspace();
+  const {
+    workspace: activeWorkspace,
+    workspaces,
+    isLoading,
+  } = useActiveWorkspace();
+  const billingQuery = useBilling();
 
   const isActiveWorkspaceExists = Boolean(activeWorkspace);
+  const planId = (billingQuery.data?.plan ?? "FREE") as PlanId;
+  const planName = PLAN_DISPLAY[planId].name;
 
   return (
     <SidebarMenu>
@@ -49,9 +59,11 @@ export function WorkspaceSwitcher() {
                     ? activeWorkspace!.name
                     : "Select a workspace"}
               </span>
-              <span className="truncate text-xs">
-                {isActiveWorkspaceExists ? "Workspace" : null}
-              </span>
+              {isActiveWorkspaceExists ? (
+                <Badge className={cn(planName !== "Free" && "bg-purple-600")} size="xs">
+                  {billingQuery.isLoading ? "…" : planName}
+                </Badge>
+              ) : null}
             </div>
             <ChevronsUpDown className="ml-auto" />
           </DropdownMenuTrigger>

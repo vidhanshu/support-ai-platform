@@ -1,5 +1,5 @@
 import { PlaceholderPage } from "@/components/common/placeholder-page";
 
 export default function Page() {
-  return <PlaceholderPage title="Backstage" />;
+  return <PlaceholderPage title="Backstage" description="Coming soon..." />;
 }

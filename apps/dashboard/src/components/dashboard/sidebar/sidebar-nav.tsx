@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight, ExternalLink, type LucideIcon } from "lucide-react";
@@ -105,6 +106,12 @@ function NavItem({
   );
   const selfActive = isPathActive(pathname, item.url, item.exact);
   const isActive = Boolean(childActive || selfActive);
+  const [open, setOpen] = useState(isActive);
+
+  // Keep section expanded while a child route is active; still allow manual toggle.
+  useEffect(() => {
+    if (isActive) setOpen(true);
+  }, [isActive]);
 
   if (!item.items?.length) {
     return (
@@ -116,7 +123,8 @@ function NavItem({
 
   return (
     <Collapsible
-      defaultOpen={isActive}
+      open={open}
+      onOpenChange={setOpen}
       className="group/collapsible"
       render={<SidebarMenuItem />}
     >
