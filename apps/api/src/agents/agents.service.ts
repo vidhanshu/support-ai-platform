@@ -8,10 +8,14 @@ import { UpdateAgentDto } from "./dto/update-agent.dto";
 import { WorkspaceContext } from "../common/interfaces/request.interface";
 import { JwtUser } from "../auth/interfaces/jwt.interface";
 import { PrismaService } from "@repo/database";
+import { PlanLimitsService } from "../billing/plan-limits.service";
 
 @Injectable()
 export class AgentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly planLimits: PlanLimitsService,
+  ) {}
 
   async create(
     workspace: WorkspaceContext,
@@ -20,6 +24,8 @@ export class AgentsService {
   ) {
     const { id: workspaceId } = workspace;
     const { id: userId } = user;
+
+    await this.planLimits.assertCanCreateAgent(workspaceId);
 
     return this.prisma.agent.create({
       data: {

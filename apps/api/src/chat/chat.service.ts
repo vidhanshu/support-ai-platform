@@ -27,6 +27,7 @@ import {
   type TokenUsage,
 } from "@repo/ai";
 import { AI_CONFIGS } from "@repo/config";
+import { PlanLimitsService } from "../billing/plan-limits.service";
 
 export type ChatSource = {
   id: string;
@@ -110,6 +111,7 @@ export class ChatService {
     private readonly promptBuilder: PromptBuilder,
     private readonly llmService: LlmService,
     private readonly costCalculator: DefaultCostCalculator,
+    private readonly planLimits: PlanLimitsService,
   ) {}
 
   async *streamMessage(
@@ -120,7 +122,8 @@ export class ChatService {
   ): AsyncGenerator<ChatStreamEvent> {
     const totalStart = performance.now();
 
-    // Fail before opening the SSE stream so the client gets a normal 400 JSON body.
+    // Fail before opening the SSE stream so the client gets a normal JSON body.
+    await this.planLimits.assertCanSendChatMessage(workspace.id);
     await this.assertAgentReadyForChat(workspace.id, agentId);
 
     yield { type: "status", data: { stage: "started", ms: 0 } };
@@ -305,6 +308,8 @@ export class ChatService {
         conversationId: conversation.id,
       },
     });
+
+    await this.planLimits.incrementChatMessages(workspace.id);
 
     const historyResult = await this.conversationContextBuilder.build(
       conversation.id,

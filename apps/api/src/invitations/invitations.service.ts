@@ -22,12 +22,14 @@ import { InjectQueue } from "@nestjs/bullmq";
 import type { Queue } from "bullmq";
 import type { EmailJobPayload } from "@repo/email";
 import { ConfigService } from "@nestjs/config";
+import { PlanLimitsService } from "../billing/plan-limits.service";
 
 @Injectable()
 export class InvitationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
+    private readonly planLimits: PlanLimitsService,
     @InjectQueue(QUEUE_NAMES.EMAIL)
     private readonly emailQueue: Queue<EmailJobPayload>,
   ) {}
@@ -37,6 +39,8 @@ export class InvitationsService {
     user: JwtUser,
     dto: CreateInvitationDto,
   ) {
+    await this.planLimits.assertCanAddMember(workspace.id);
+
     const email = dto.email;
 
     const dbUser = await this.prisma.user.findUnique({ where: { email } });

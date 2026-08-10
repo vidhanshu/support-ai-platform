@@ -193,3 +193,52 @@ export type ConversationDetail = {
   updatedAt: string;
   messages: ConversationMessage[];
 };
+
+export type SubscriptionPlan = "FREE" | "HOBBY" | "PRO";
+
+export type SubscriptionStatus =
+  | "ACTIVE"
+  | "TRIALING"
+  | "PAST_DUE"
+  | "CANCELED"
+  | "INCOMPLETE"
+  | "INCOMPLETE_EXPIRED"
+  | "UNPAID";
+
+export type PlanLimits = {
+  agents: number;
+  knowledgeSources: number;
+  chatMessagesPerMonth: number;
+  websiteSources: boolean;
+  teamMembers: number;
+};
+
+export type BillingStatus = {
+  plan: SubscriptionPlan;
+  status: SubscriptionStatus | string;
+  limits: PlanLimits;
+  usage: {
+    chatMessagesThisMonth: number;
+  };
+  subscription: {
+    currentPeriodStart: string | null;
+    currentPeriodEnd: string | null;
+    cancelAtPeriodEnd: boolean;
+  } | null;
+};
+
+export type CheckoutSessionResponse = {
+  url: string;
+};
+
+export type ChangePlanResponse =
+  | CheckoutSessionResponse
+  | {
+      action: "cancel_at_period_end";
+      cancelAtPeriodEnd: boolean;
+      currentPeriodEnd: string | null;
+    }
+  | {
+      action: "subscription_updated";
+      plan: SubscriptionPlan;
+    };

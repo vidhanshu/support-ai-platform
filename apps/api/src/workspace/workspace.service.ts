@@ -9,6 +9,8 @@ import { JwtUser } from "../auth/interfaces/jwt.interface";
 import {
   Prisma,
   PrismaService,
+  SubscriptionPlan,
+  SubscriptionStatus,
   Workspace,
   WorkspaceRole,
 } from "@repo/database";
@@ -45,6 +47,12 @@ export class WorkspaceService {
             create: {
               role: WorkspaceRole.OWNER,
               userId: user.id,
+            },
+          },
+          subscription: {
+            create: {
+              plan: SubscriptionPlan.FREE,
+              status: SubscriptionStatus.ACTIVE,
             },
           },
         },

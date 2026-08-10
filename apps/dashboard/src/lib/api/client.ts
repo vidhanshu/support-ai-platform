@@ -16,7 +16,7 @@ import {
   type AuthTokens,
 } from "@/lib/auth/tokens";
 import { API_BASE_URL, API_HEADERS } from "./constants";
-import { ApiError, extractApiErrorMessage } from "./errors";
+import { ApiError, extractApiErrorCode, extractApiErrorMessage } from "./errors";
 
 export type UploadProgress = {
   loaded: number;
@@ -91,7 +91,8 @@ function toApiError(error: unknown): ApiError {
       details,
       axiosError.message || "Something went wrong",
     );
-    return new ApiError(message, status, details);
+    const code = extractApiErrorCode(details);
+    return new ApiError(message, status, details, code);
   }
 
   if (error instanceof Error) {

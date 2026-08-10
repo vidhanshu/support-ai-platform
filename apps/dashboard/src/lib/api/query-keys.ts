@@ -64,4 +64,10 @@ export const queryKeys = {
     detail: (workspaceId: string, id: string) =>
       [...queryKeys.conversations.all(workspaceId), "detail", id] as const,
   },
+
+  billing: {
+    all: (workspaceId: string) => ["billing", workspaceId] as const,
+    status: (workspaceId: string) =>
+      [...queryKeys.billing.all(workspaceId), "status"] as const,
+  },
 } as const;

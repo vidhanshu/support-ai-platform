@@ -1,6 +1,6 @@
 export { apiClient } from "./client";
 export type { ApiRequestOptions, UploadProgress } from "./client";
-export { ApiError, getErrorMessage } from "./errors";
+export { ApiError, getErrorMessage, isPlanLimitError } from "./errors";
 export { API_BASE_URL, API_HEADERS } from "./constants";
 export { queryKeys } from "./query-keys";
 export { authApi } from "./auth";
@@ -34,4 +34,6 @@ export type {
   BulkDeleteConversationsInput,
   BulkDeleteConversationsResponse,
 } from "./conversations";
+export { billingApi } from "./billing";
+export type { CheckoutPlan } from "./billing";
 export type * from "./types";

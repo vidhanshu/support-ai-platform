@@ -3,9 +3,11 @@ import { WebsitesService } from "./websites.service";
 import { WebsitesController } from "./websites.controller";
 import { BullModule } from "@nestjs/bullmq";
 import { QUEUE_NAMES } from "@repo/config";
+import { BillingModule } from "../../billing/billing.module";
 
 @Module({
   imports: [
+    BillingModule,
     BullModule.registerQueue({
       name: QUEUE_NAMES.WEBSITE_PROCESSING,
     }),

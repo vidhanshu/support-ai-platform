@@ -13,6 +13,7 @@ import { BullModule } from "@nestjs/bullmq";
 import { ChatModule } from './chat/chat.module';
 import { ConversationModule } from './conversation/conversation.module';
 import { KnowledgeSourcesModule } from './knowledge-sources/knowledge-sources.module';
+import { BillingModule } from './billing/billing.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { KnowledgeSourcesModule } from './knowledge-sources/knowledge-sources.mo
     ChatModule,
     ConversationModule,
     KnowledgeSourcesModule,
+    BillingModule,
   ],
 })
 export class AppModule {}

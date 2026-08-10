@@ -9,11 +9,13 @@ import { WorkspaceContext } from "../../common/interfaces/request.interface";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import { JOB_NAMES, QUEUE_NAMES, WEBSITE_CONFIGS } from "@repo/config";
+import { PlanLimitsService } from "../../billing/plan-limits.service";
 
 @Injectable()
 export class WebsitesService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly planLimits: PlanLimitsService,
     @InjectQueue(QUEUE_NAMES.WEBSITE_PROCESSING) private readonly queue: Queue,
   ) {}
 
@@ -21,6 +23,8 @@ export class WebsitesService {
     workspace: WorkspaceContext,
     createWebsiteDto: CreateWebsiteDto,
   ) {
+    await this.planLimits.assertCanCreateWebsiteSource(workspace.id);
+
     let rootUrl: URL;
     try {
       rootUrl = new URL(createWebsiteDto.url);

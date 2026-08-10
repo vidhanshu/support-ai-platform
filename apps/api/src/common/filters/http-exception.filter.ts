@@ -16,18 +16,24 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = "Internal Server Error";
+    let message: string | string[] = "Internal Server Error";
+    let code: string | undefined;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
 
       const error = exception.getResponse();
 
-      message =
-        typeof error === "string"
-          ? error
-          : // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ((error as any).message ?? message);
+      if (typeof error === "string") {
+        message = error;
+      } else if (error && typeof error === "object") {
+        const body = error as {
+          message?: string | string[];
+          code?: string;
+        };
+        message = body.message ?? message;
+        code = body.code;
+      }
     }
 
     response.status(status).json({
@@ -35,6 +41,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       error: {
         statusCode: status,
         message,
+        ...(code ? { code } : {}),
       },
       path: request.url,
       timestamp: new Date().toISOString(),

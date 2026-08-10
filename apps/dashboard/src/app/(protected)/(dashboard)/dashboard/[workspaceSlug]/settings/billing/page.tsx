@@ -1,5 +1,10 @@
-import { PlaceholderPage } from "@/components/common/placeholder-page";
+import { Suspense } from "react";
+import { BillingSettingsView } from "@/components/dashboard/settings/billing-settings-view";
 
 export default function Page() {
-  return <PlaceholderPage title="Workspace settings — Billing" />;
+  return (
+    <Suspense fallback={null}>
+      <BillingSettingsView />
+    </Suspense>
+  );
 }

@@ -1,5 +1,10 @@
-import { PlaceholderPage } from "@/components/common/placeholder-page";
+import { Suspense } from "react";
+import { PlansSettingsView } from "@/components/dashboard/settings/plans-settings-view";
 
 export default function Page() {
-  return <PlaceholderPage title="Workspace settings — Plans" />;
+  return (
+    <Suspense fallback={null}>
+      <PlansSettingsView />
+    </Suspense>
+  );
 }

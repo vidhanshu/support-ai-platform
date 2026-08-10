@@ -42,6 +42,45 @@ export const ENV_KEYS = {
   /** `resend` (default) or `console` for local dev without a domain */
   EMAIL_PROVIDER: "EMAIL_PROVIDER",
   APP_WEB_URL: "APP_WEB_URL",
+  STRIPE_SECRET_KEY: "STRIPE_SECRET_KEY",
+  STRIPE_WEBHOOK_SECRET: "STRIPE_WEBHOOK_SECRET",
+  STRIPE_HOBBY_PRICE_ID: "STRIPE_HOBBY_PRICE_ID",
+  STRIPE_PRO_PRICE_ID: "STRIPE_PRO_PRICE_ID",
+} as const;
+
+export type PlanId = "FREE" | "HOBBY" | "PRO";
+
+export type PlanLimits = {
+  agents: number;
+  knowledgeSources: number;
+  chatMessagesPerMonth: number;
+  websiteSources: boolean;
+  teamMembers: number;
+};
+
+/** Single source of truth for application plan limits (not Stripe prices). */
+export const PLAN_LIMITS: Record<PlanId, PlanLimits> = {
+  FREE: {
+    agents: 1,
+    knowledgeSources: 3,
+    chatMessagesPerMonth: 100,
+    websiteSources: false,
+    teamMembers: 1,
+  },
+  HOBBY: {
+    agents: 3,
+    knowledgeSources: 15,
+    chatMessagesPerMonth: 2000,
+    websiteSources: true,
+    teamMembers: 3,
+  },
+  PRO: {
+    agents: 10,
+    knowledgeSources: 100,
+    chatMessagesPerMonth: 20000,
+    websiteSources: true,
+    teamMembers: 10,
+  },
 } as const;
 
 export const AI_CONFIGS = {

@@ -15,16 +15,20 @@ import { StorageService } from "@repo/storage";
 import { InjectQueue } from "@nestjs/bullmq";
 import { JOB_NAMES, MIME_TYPE_TO_EXTENSION, QUEUE_NAMES } from "@repo/config";
 import type { Queue } from "bullmq";
+import { PlanLimitsService } from "../billing/plan-limits.service";
 
 @Injectable()
 export class DocumentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly storageService: StorageService,
+    private readonly planLimits: PlanLimitsService,
     @InjectQueue(QUEUE_NAMES.DOCUMENT_PROCESSING) private readonly queue: Queue,
   ) {}
 
   async uploadUrl(workspace: WorkspaceContext, dto: CreateUploadUrlDto) {
+    await this.planLimits.assertCanCreateKnowledgeSource(workspace.id);
+
     const { contentType, originalName, size } = dto;
     const documentId = crypto.randomUUID();
 

@@ -11,7 +11,10 @@ import { ResponseInterceptor } from "./common/interceptors/response.interceptor"
 loadEnv({ path: getRootEnvPath() });
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    // Required for Stripe webhook signature verification
+    rawBody: true,
+  });
 
   const configService = app.get(ConfigService);
   const port = Number(configService.get<string>("API_PORT") ?? 3001);

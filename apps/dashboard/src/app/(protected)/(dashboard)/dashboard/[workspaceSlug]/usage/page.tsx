@@ -1,5 +1,5 @@
-import { PlaceholderPage } from "@/components/common/placeholder-page";
+import { UsageView } from "@/components/dashboard/usage-view";
 
 export default function Page() {
-  return <PlaceholderPage title="Usage" />;
+  return <UsageView />;
 }

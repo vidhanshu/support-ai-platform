@@ -3,6 +3,7 @@ export class ApiError extends Error {
     message: string,
     public status: number,
     public details?: unknown,
+    public code?: string,
   ) {
     super(message);
     this.name = "ApiError";
@@ -14,8 +15,10 @@ type ApiErrorBody = {
   error?: {
     statusCode?: number;
     message?: string | string[];
+    code?: string;
   };
   message?: string | string[];
+  code?: string;
 };
 
 function normalizeMessage(message: string | string[] | undefined) {
@@ -40,8 +43,18 @@ export function extractApiErrorMessage(body: unknown, fallback: string) {
   );
 }
 
+export function extractApiErrorCode(body: unknown): string | undefined {
+  if (!body || typeof body !== "object") return undefined;
+  const payload = body as ApiErrorBody;
+  return payload.error?.code ?? payload.code;
+}
+
 export function getErrorMessage(error: unknown, fallback: string) {
   if (error instanceof ApiError) return error.message;
   if (error instanceof Error) return error.message;
   return fallback;
+}
+
+export function isPlanLimitError(error: unknown): boolean {
+  return error instanceof ApiError && error.code === "PLAN_LIMIT_REACHED";
 }
