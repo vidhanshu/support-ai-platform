@@ -25,7 +25,7 @@ const ICONS: Record<SourceCardId, React.ComponentType<{ className?: string }>> =
   };
 
 type AddSourceCardsProps = {
-  onSelect: (id: Extract<SourceCardId, "files" | "website">) => void;
+  onSelect: (id: Extract<SourceCardId, "files" | "website" | "text">) => void;
 };
 
 export function AddSourceCards({ onSelect }: AddSourceCardsProps) {
@@ -41,7 +41,11 @@ export function AddSourceCards({ onSelect }: AddSourceCardsProps) {
             disabled={!card.enabled}
             title={card.enabled ? undefined : "Coming soon"}
             onClick={() => {
-              if (card.id === "files" || card.id === "website") {
+              if (
+                card.id === "files" ||
+                card.id === "website" ||
+                card.id === "text"
+              ) {
                 onSelect(card.id);
               }
             }}

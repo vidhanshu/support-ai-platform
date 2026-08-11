@@ -16,6 +16,7 @@ export class KnowledgeSourcesService {
       include: {
         document: true,
         website: true,
+        textSnippet: true,
         agents: {
           include: {
             agent: {

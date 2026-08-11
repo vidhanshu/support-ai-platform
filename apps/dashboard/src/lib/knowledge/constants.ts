@@ -1,5 +1,7 @@
 export const PDF_MIME = "application/pdf";
 export const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
+/** Mirrors TEXT_SNIPPET_CONFIGS.MAX_CONTENT_BYTES from @repo/config */
+export const TEXT_SNIPPET_MAX_BYTES = 1 * 1024 * 1024;
 
 export type SourceCardId =
   | "files"
@@ -32,8 +34,8 @@ export const SOURCE_CARDS: SourceCardConfig[] = [
   {
     id: "text",
     title: "Add text snippet",
-    description: "Coming soon",
-    enabled: false,
+    description: "Rich text knowledge",
+    enabled: true,
   },
   {
     id: "qa",

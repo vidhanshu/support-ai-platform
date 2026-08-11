@@ -5,3 +5,4 @@ export * from "./retrieval/retrieval.service";
 export * from "./context/context.builder";
 export * from "./crawl/crawl.service";
 export * from "./crawl/crawl.module";
+export * from "./text/html-to-text";

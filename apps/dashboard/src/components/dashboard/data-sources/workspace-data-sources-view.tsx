@@ -21,6 +21,7 @@ import { formatBytes } from "@/lib/knowledge/constants";
 import { toastApiError, toastSuccess } from "@/lib/toast";
 import { AddFileSheet } from "./add-file-sheet";
 import { AddSourceCards } from "./add-source-cards";
+import { AddTextSnippetSheet } from "./add-text-snippet-sheet";
 import { AddWebsiteSheet } from "./add-website-sheet";
 import { AttachToAgentsSheet } from "./attach-to-agents-sheet";
 import { SourceList } from "./source-list";
@@ -29,6 +30,7 @@ function sourceTitle(source: KnowledgeSource) {
   return (
     source.document?.originalFilename ||
     source.website?.rootUrl ||
+    source.textSnippet?.title ||
     source.name
   );
 }
@@ -41,11 +43,14 @@ export function WorkspaceDataSourcesView() {
 
   const [fileOpen, setFileOpen] = useState(false);
   const [websiteOpen, setWebsiteOpen] = useState(false);
+  const [textOpen, setTextOpen] = useState(false);
   const [attachSource, setAttachSource] = useState<KnowledgeSource | null>(
     null,
   );
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<"all" | "DOCUMENT" | "WEBSITE">("all");
+  const [filter, setFilter] = useState<
+    "all" | "DOCUMENT" | "WEBSITE" | "TEXT_SNIPPET"
+  >("all");
 
   const sources = useMemo(() => {
     return (sourcesQuery.data ?? []).filter((source) => {
@@ -55,6 +60,7 @@ export function WorkspaceDataSourcesView() {
         source.name,
         source.document?.originalFilename,
         source.website?.rootUrl,
+        source.textSnippet?.title,
         ...(source.agents?.map((link) => link.agent.name) ?? []),
       ]
         .filter(Boolean)
@@ -66,7 +72,11 @@ export function WorkspaceDataSourcesView() {
 
   const totalBytes = useMemo(() => {
     return (sourcesQuery.data ?? []).reduce((sum, source) => {
-      return sum + (source.document?.size ?? 0);
+      return (
+        sum +
+        (source.document?.size ?? 0) +
+        (source.textSnippet?.contentBytes ?? 0)
+      );
     }, 0);
   }, [sourcesQuery.data]);
 
@@ -124,6 +134,7 @@ export function WorkspaceDataSourcesView() {
         onSelect={(id) => {
           if (id === "files") setFileOpen(true);
           if (id === "website") setWebsiteOpen(true);
+          if (id === "text") setTextOpen(true);
         }}
       />
 
@@ -140,7 +151,12 @@ export function WorkspaceDataSourcesView() {
         <Select
           value={filter}
           onValueChange={(value) => {
-            if (value === "all" || value === "DOCUMENT" || value === "WEBSITE") {
+            if (
+              value === "all" ||
+              value === "DOCUMENT" ||
+              value === "WEBSITE" ||
+              value === "TEXT_SNIPPET"
+            ) {
               setFilter(value);
             }
           }}
@@ -152,6 +168,7 @@ export function WorkspaceDataSourcesView() {
             <SelectItem value="all">All sources</SelectItem>
             <SelectItem value="DOCUMENT">Files</SelectItem>
             <SelectItem value="WEBSITE">Websites</SelectItem>
+            <SelectItem value="TEXT_SNIPPET">Text snippets</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -159,7 +176,7 @@ export function WorkspaceDataSourcesView() {
       <SourceList
         sources={sources}
         isLoading={sourcesQuery.isLoading}
-        emptyMessage="No data sources yet. Add a PDF or website to get started."
+        emptyMessage="No data sources yet. Add a PDF, website, or text snippet to get started."
         workspaceSlug={workspaceSlug}
         showAgents
         onDelete={(id) => void handleDelete(id)}
@@ -169,6 +186,7 @@ export function WorkspaceDataSourcesView() {
 
       <AddFileSheet open={fileOpen} onOpenChange={setFileOpen} />
       <AddWebsiteSheet open={websiteOpen} onOpenChange={setWebsiteOpen} />
+      <AddTextSnippetSheet open={textOpen} onOpenChange={setTextOpen} />
       <AttachToAgentsSheet
         open={Boolean(attachSource)}
         onOpenChange={(open) => {

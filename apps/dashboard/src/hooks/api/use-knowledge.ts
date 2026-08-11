@@ -6,6 +6,7 @@ import {
   documentsApi,
   knowledgeApi,
   queryKeys,
+  type CreateTextSnippetInput,
   type CreateWebsiteInput,
 } from "@/lib/api";
 import { useActiveWorkspace } from "@/hooks/use-active-workspace";
@@ -55,6 +56,24 @@ export function useCreateWebsite(agentId?: string) {
   return useMutation({
     mutationFn: async (input: CreateWebsiteInput) => {
       const source = await knowledgeApi.createWebsite(input);
+      if (agentId) {
+        await agentsApi.attachKnowledgeSource(agentId, source.id);
+      }
+      return source;
+    },
+    onSuccess: () => {
+      invalidateKnowledgeAndAgents(queryClient, workspaceId, agentId);
+    },
+  });
+}
+
+export function useCreateTextSnippet(agentId?: string) {
+  const queryClient = useQueryClient();
+  const { workspaceId } = useActiveWorkspace();
+
+  return useMutation({
+    mutationFn: async (input: CreateTextSnippetInput) => {
+      const source = await knowledgeApi.createTextSnippet(input);
       if (agentId) {
         await agentsApi.attachKnowledgeSource(agentId, source.id);
       }

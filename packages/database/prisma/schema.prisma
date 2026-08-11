@@ -26,6 +26,7 @@ enum KnowledgeSourceType {
   DOCUMENT
   QNA
   WEBSITE
+  TEXT_SNIPPET
   NOTION
   TICKET
 }
@@ -234,13 +235,33 @@ model KnowledgeSource {
   agents   AgentKnowledgeSource[]
   document Document?
 
-  // TODO: Add QnA and website support
+  // TODO: Add QnA support
   // qna QnA?
-  website Website?
+  website     Website?
+  textSnippet TextSnippet?
 
   chunks Chunk[]
 
   @@index([workspaceId])
+}
+
+model TextSnippet {
+  id           String  @id @default(uuid())
+  title        String
+  /** Rich HTML from the editor */
+  contentHtml  String
+  /** Plain text derived for chunking / retrieval */
+  contentText  String
+  contentBytes Int
+  errorMessage String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  knowledgeSourceId String          @unique
+  knowledgeSource   KnowledgeSource @relation(fields: [knowledgeSourceId], references: [id], onDelete: Cascade)
+
+  @@index([knowledgeSourceId])
 }
 
 model Website {

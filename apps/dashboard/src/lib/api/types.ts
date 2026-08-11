@@ -83,6 +83,7 @@ export type KnowledgeSourceType =
   | "DOCUMENT"
   | "QNA"
   | "WEBSITE"
+  | "TEXT_SNIPPET"
   | "NOTION"
   | "TICKET";
 
@@ -119,6 +120,18 @@ export type KnowledgeWebsite = {
   updatedAt: string;
 };
 
+export type KnowledgeTextSnippet = {
+  id: string;
+  title: string;
+  contentHtml: string;
+  contentText: string;
+  contentBytes: number;
+  errorMessage: string | null;
+  knowledgeSourceId: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type KnowledgeSourceAgentLink = {
   id: string;
   agentId: string;
@@ -140,6 +153,7 @@ export type KnowledgeSource = {
   updatedAt: string;
   document?: KnowledgeDocument | null;
   website?: KnowledgeWebsite | null;
+  textSnippet?: KnowledgeTextSnippet | null;
   agents?: KnowledgeSourceAgentLink[];
 };
 

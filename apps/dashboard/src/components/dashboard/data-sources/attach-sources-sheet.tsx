@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { FileText, Globe } from "lucide-react";
+import { FileText, Globe, Type } from "lucide-react";
 import { Button } from "@repo/ui/components/button";
 import { Checkbox } from "@repo/ui/components/checkbox";
 import { Label } from "@repo/ui/components/label";
@@ -34,6 +34,7 @@ function sourceTitle(source: KnowledgeSource) {
   return (
     source.document?.originalFilename ||
     source.website?.rootUrl ||
+    source.textSnippet?.title ||
     source.name
   );
 }
@@ -115,6 +116,7 @@ export function AttachSourcesSheet({
               {available.map((source) => {
                 const checked = selected.includes(source.id);
                 const isWebsite = source.type === "WEBSITE";
+                const isText = source.type === "TEXT_SNIPPET";
                 return (
                   <li key={source.id}>
                     <Label
@@ -141,6 +143,8 @@ export function AttachSourcesSheet({
                       <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border bg-background">
                         {isWebsite ? (
                           <Globe className="size-4" />
+                        ) : isText ? (
+                          <Type className="size-4" />
                         ) : (
                           <FileText className="size-4" />
                         )}
@@ -152,7 +156,9 @@ export function AttachSourcesSheet({
                         <span className="mt-0.5 block truncate text-xs text-muted-foreground">
                           {isWebsite
                             ? "Website"
-                            : `File${source.document ? ` · ${formatBytes(source.document.size)}` : ""}`}
+                            : isText
+                              ? `Text${source.textSnippet ? ` · ${formatBytes(source.textSnippet.contentBytes)}` : ""}`
+                              : `File${source.document ? ` · ${formatBytes(source.document.size)}` : ""}`}
                           {" · "}
                           {source.status.toLowerCase()}
                         </span>

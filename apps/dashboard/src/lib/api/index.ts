@@ -17,7 +17,10 @@ export { healthApi } from "./health";
 export { agentsApi } from "./agents";
 export type { CreateAgentInput, UpdateAgentInput } from "./agents";
 export { knowledgeApi } from "./knowledge";
-export type { CreateWebsiteInput } from "./knowledge";
+export type {
+  CreateWebsiteInput,
+  CreateTextSnippetInput,
+} from "./knowledge";
 export { documentsApi } from "./documents";
 export type {
   CreateUploadUrlInput,

@@ -3,6 +3,7 @@ import { Injectable } from "@nestjs/common";
 import type {
   Chunk,
   ExtractedDocument,
+  ExtractedTextSnippet,
   ExtractedWebsite,
 } from "@repo/contracts";
 
@@ -34,7 +35,9 @@ export class ChunkingService {
     return chunks;
   }
 
-  async createWebsiteChunks(extractedWebsite: ExtractedWebsite): Promise<Chunk[]> {
+  async createWebsiteChunks(
+    extractedWebsite: ExtractedWebsite,
+  ): Promise<Chunk[]> {
     const splitter = this.createSplitter();
     const chunks: Chunk[] = [];
     let chunkIndex = 0;
@@ -57,6 +60,23 @@ export class ChunkingService {
     }
 
     return chunks;
+  }
+
+  async createTextSnippetChunks(
+    snippet: ExtractedTextSnippet,
+  ): Promise<Chunk[]> {
+    const text = snippet.text.trim();
+    if (!text) return [];
+
+    const splitter = this.createSplitter();
+    const parts = await splitter.splitText(text);
+    return parts.map((part, index) => ({
+      text: part,
+      index,
+      metadata: {
+        title: snippet.title,
+      },
+    }));
   }
 
   private createSplitter() {

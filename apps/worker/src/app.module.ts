@@ -6,6 +6,7 @@ import { HealthModule } from "./modules/health/health.module";
 import { BullModule } from "@nestjs/bullmq";
 import { DocumentsModule } from './documents/documents.module';
 import { WebsitesModule } from './websites/websites.module';
+import { TextSnippetsModule } from './text-snippets/text-snippets.module';
 import { EmailModule } from './email/email.module';
 
 @Module({
@@ -30,12 +31,16 @@ import { EmailModule } from './email/email.module';
       name: QUEUE_NAMES.WEBSITE_PROCESSING,
     }),
     BullModule.registerQueue({
+      name: QUEUE_NAMES.TEXT_SNIPPET_PROCESSING,
+    }),
+    BullModule.registerQueue({
       name: QUEUE_NAMES.EMAIL,
     }),
     PrismaModule,
     HealthModule,
     DocumentsModule,
     WebsitesModule,
+    TextSnippetsModule,
     EmailModule,
   ],
 })

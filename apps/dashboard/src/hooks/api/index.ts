@@ -30,6 +30,7 @@ export {
 export {
   useKnowledgeSources,
   useCreateWebsite,
+  useCreateTextSnippet,
   useUploadDocument,
   useDeleteKnowledgeSource,
   useAttachKnowledgeSource,

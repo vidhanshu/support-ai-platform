@@ -180,14 +180,22 @@ export const WEBSITE_CONFIGS = {
   USER_AGENT: "SupportAIBot/1.0 (+https://localhost; knowledge-crawler)",
 } as const;
 
+export const TEXT_SNIPPET_CONFIGS = {
+  MAX_CONTENT_BYTES: 1 * 1024 * 1024, // 1MB
+  MIN_CONTENT_CHARS: 1,
+  MAX_TITLE_LENGTH: 200,
+} as const;
+
 export const QUEUE_NAMES = {
   DOCUMENT_PROCESSING: "document-processing",
   WEBSITE_PROCESSING: "website-processing",
+  TEXT_SNIPPET_PROCESSING: "text-snippet-processing",
   EMAIL: "email",
 } as const;
 
 export const JOB_NAMES = {
   PROCESS_DOCUMENT: "process-document",
   CRAWL_WEBSITE: "process-website",
+  PROCESS_TEXT_SNIPPET: "process-text-snippet",
   SEND_EMAIL: "send-email",
 } as const;

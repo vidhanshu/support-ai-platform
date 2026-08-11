@@ -6,6 +6,7 @@ import {
   Link2,
   MoreHorizontal,
   Trash2,
+  Type,
   Unlink,
 } from "lucide-react";
 import Link from "next/link";
@@ -59,7 +60,31 @@ function sourceMeta(source: KnowledgeSource) {
       : "Crawl in progress";
     return `${pages} links · ${crawled}`;
   }
+  if (source.type === "TEXT_SNIPPET" && source.textSnippet) {
+    return `${formatSourceDate(source.createdAt)} · ${formatBytes(source.textSnippet.contentBytes)}`;
+  }
   return formatSourceDate(source.createdAt);
+}
+
+function sourceIcon(source: KnowledgeSource) {
+  if (source.type === "WEBSITE") return <Globe className="size-4" />;
+  if (source.type === "TEXT_SNIPPET") return <Type className="size-4" />;
+  return <FileText className="size-4" />;
+}
+
+function sourceKindLabel(source: KnowledgeSource) {
+  if (source.type === "WEBSITE") return "Website";
+  if (source.type === "TEXT_SNIPPET") return "Text";
+  return "File";
+}
+
+function sourceTitle(source: KnowledgeSource) {
+  return (
+    source.document?.originalFilename ||
+    source.website?.rootUrl ||
+    source.textSnippet?.title ||
+    source.name
+  );
 }
 
 export function SourceList({
@@ -93,11 +118,7 @@ export function SourceList({
   return (
     <ul className="space-y-3">
       {sources.map((source) => {
-        const isWebsite = source.type === "WEBSITE";
-        const title =
-          source.document?.originalFilename ||
-          source.website?.rootUrl ||
-          source.name;
+        const title = sourceTitle(source);
         const agents = source.agents ?? [];
         const hasMenu = Boolean(onDelete || onDetach || onAttachToAgents);
 
@@ -107,11 +128,7 @@ export function SourceList({
             className="flex items-center gap-4 rounded-xl border bg-card p-4"
           >
             <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border bg-background">
-              {isWebsite ? (
-                <Globe className="size-4" />
-              ) : (
-                <FileText className="size-4" />
-              )}
+              {sourceIcon(source)}
             </span>
 
             <div className="min-w-0 flex-1">
@@ -127,17 +144,20 @@ export function SourceList({
                     </span>
                   ) : (
                     agents.map((link) => {
-                      const href =
-                        workspaceSlug
-                          ? `/dashboard/${workspaceSlug}/agents/${link.agent.id}/build/data-sources`
-                          : undefined;
+                      const href = workspaceSlug
+                        ? `/dashboard/${workspaceSlug}/agents/${link.agent.id}/build/data-sources`
+                        : undefined;
                       const chip = (
                         <span className="inline-flex items-center rounded-full border bg-background px-2 py-0.5 text-xs">
                           {link.agent.name}
                         </span>
                       );
                       return href ? (
-                        <Link key={link.id} href={href} className="hover:opacity-80">
+                        <Link
+                          key={link.id}
+                          href={href}
+                          className="hover:opacity-80"
+                        >
                           {chip}
                         </Link>
                       ) : (
@@ -159,7 +179,7 @@ export function SourceList({
                 {source.status.toLowerCase()}
               </span>
               <span className="hidden rounded-full border px-2.5 py-1 text-xs text-muted-foreground sm:inline-flex">
-                {isWebsite ? "Website" : "File"}
+                {sourceKindLabel(source)}
               </span>
 
               {hasMenu ? (

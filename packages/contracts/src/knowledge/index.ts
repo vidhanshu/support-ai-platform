@@ -39,6 +39,12 @@ export interface ExtractedWebsite {
   metadata: KnowledgeSourceMetadata;
 }
 
+export interface ExtractedTextSnippet {
+  title: string;
+  text: string;
+  metadata: KnowledgeSourceMetadata;
+}
+
 export interface Chunk {
   text: string;
   index: number;

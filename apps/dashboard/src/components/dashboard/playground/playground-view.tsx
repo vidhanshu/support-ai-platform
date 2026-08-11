@@ -130,6 +130,9 @@ export function PlaygroundView({ agentId }: PlaygroundViewProps) {
         totalBytes += source.document?.size ?? 0;
       } else if (source.type === "WEBSITE") {
         links += source.website?.pagesCrawled || source.website?.pagesFound || 1;
+      } else if (source.type === "TEXT_SNIPPET") {
+        files += 1;
+        totalBytes += source.textSnippet?.contentBytes ?? 0;
       }
     }
     return { files, links, totalBytes };

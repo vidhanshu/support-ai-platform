@@ -56,6 +56,7 @@ export class AgentsService {
               include: {
                 document: true,
                 website: true,
+                textSnippet: true,
               },
             },
           },
