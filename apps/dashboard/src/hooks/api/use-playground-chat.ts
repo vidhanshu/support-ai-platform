@@ -12,6 +12,10 @@ export type PlaygroundMessage = {
   role: "user" | "assistant";
   content: string;
   sources?: ChatSource[];
+  /** End-to-end response latency in ms (assistant messages). */
+  responseMs?: number | null;
+  /** Client timestamp when the user hit send (for live elapsed UI). */
+  startedAt?: number;
   pending?: boolean;
 };
 
@@ -52,11 +56,18 @@ export function usePlaygroundChat(agentId: string) {
         content: trimmed,
       };
       const assistantId = createId();
+      const startedAt = Date.now();
 
       setMessages((prev) => [
         ...prev,
         userMessage,
-        { id: assistantId, role: "assistant", content: "", pending: true },
+        {
+          id: assistantId,
+          role: "assistant",
+          content: "",
+          pending: true,
+          startedAt,
+        },
       ]);
 
       const controller = new AbortController();
@@ -99,6 +110,10 @@ export function usePlaygroundChat(agentId: string) {
                         ...message,
                         content: event.data.message.content || message.content,
                         sources: event.data.sources,
+                        responseMs:
+                          event.data.message.responseMs ??
+                          event.data.timings?.totalRequestMs ??
+                          null,
                         pending: false,
                       }
                     : message,

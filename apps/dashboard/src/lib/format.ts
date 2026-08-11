@@ -30,3 +30,10 @@ export function formatRelativeTime(value: string | Date) {
   if (absMs < year) return rtf.format(Math.round(diffMs / month), "month");
   return rtf.format(Math.round(diffMs / year), "year");
 }
+
+/** Compact chat latency (e.g. "842ms", "2.4s"). */
+export function formatResponseMs(ms: number) {
+  if (ms < 1000) return `${ms}ms`;
+  const seconds = ms / 1000;
+  return `${seconds >= 10 ? seconds.toFixed(0) : seconds.toFixed(1)}s`;
+}

@@ -162,6 +162,7 @@ export type ConversationMessage = {
   conversationId: string;
   role: MessageRole | string;
   content: string;
+  responseMs?: number | null;
   createdAt: string;
   updatedAt: string;
 };

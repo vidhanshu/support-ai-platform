@@ -182,16 +182,17 @@ export class ChatService {
       }
 
       const llmGenerationMs = this.elapsed(streamStart);
+      const totalRequestMs = this.elapsed(totalStart);
 
       const assistantMessage = await this.prismaService.message.create({
         data: {
           role: MessageRole.ASSISTANT,
           content: assistantContent,
           conversationId: prepared.conversation.id,
+          responseMs: totalRequestMs,
         },
       });
 
-      const totalRequestMs = this.elapsed(totalStart);
       const timings: ChatPipelineTimings = {
         ...prepared.timings,
         llmFirstTokenMs: firstTokenMs,

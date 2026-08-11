@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -43,9 +43,11 @@ import {
   DEFAULT_AGENT_GUARDRAILS_PROMPT,
   DEFAULT_AGENT_MODEL,
   DEFAULT_AGENT_TEMPERATURE,
+  resolveAgentModel,
   type AgentInstructionsValues,
 } from "@/lib/agents";
 import { formatBytes } from "@/lib/knowledge/constants";
+import { formatResponseMs } from "@/lib/format";
 import { toastApiError, toastSuccess } from "@/lib/toast";
 
 type PlaygroundViewProps = {
@@ -111,7 +113,7 @@ export function PlaygroundView({ agentId }: PlaygroundViewProps) {
         agentQuery.data.generalPrompt ?? DEFAULT_AGENT_GENERAL_PROMPT,
       guardrailsPrompt:
         agentQuery.data.guardrailsPrompt ?? DEFAULT_AGENT_GUARDRAILS_PROMPT,
-      model: DEFAULT_AGENT_MODEL,
+      model: resolveAgentModel(agentQuery.data.model),
       temperature: agentQuery.data.temperature ?? DEFAULT_AGENT_TEMPERATURE,
     });
   }, [agentQuery.data, form]);
@@ -156,7 +158,7 @@ export function PlaygroundView({ agentId }: PlaygroundViewProps) {
             generalPrompt: agent.generalPrompt ?? values.generalPrompt,
             guardrailsPrompt:
               agent.guardrailsPrompt ?? values.guardrailsPrompt,
-            model: DEFAULT_AGENT_MODEL,
+            model: resolveAgentModel(agent.model),
             temperature: agent.temperature ?? values.temperature,
           });
         },
@@ -491,13 +493,8 @@ function ChatPreview({
                   ) : (
                     message.content
                   )}
-                  {message.role === "assistant" &&
-                  message.sources &&
-                  message.sources.length > 0 ? (
-                    <p className="mt-2 border-t border-border/60 pt-2 text-[11px] text-muted-foreground">
-                      {message.sources.length} source
-                      {message.sources.length === 1 ? "" : "s"} used
-                    </p>
+                  {message.role === "assistant" ? (
+                    <AssistantMessageMeta message={message} />
                   ) : null}
                 </div>
               ))
@@ -524,6 +521,46 @@ function ChatPreview({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function AssistantMessageMeta({
+  message,
+}: {
+  message: ReturnType<typeof usePlaygroundChat>["messages"][number];
+}) {
+  const [elapsedMs, setElapsedMs] = useState(() =>
+    message.startedAt ? Date.now() - message.startedAt : 0,
+  );
+
+  useEffect(() => {
+    if (!message.pending || !message.startedAt) return;
+
+    const tick = () => {
+      setElapsedMs(Date.now() - message.startedAt!);
+    };
+    tick();
+    const id = window.setInterval(tick, 250);
+    return () => window.clearInterval(id);
+  }, [message.pending, message.startedAt]);
+
+  const timeLabel = message.pending
+    ? formatResponseMs(elapsedMs)
+    : message.responseMs != null
+      ? formatResponseMs(message.responseMs)
+      : null;
+
+  const sourcesLabel =
+    !message.pending && message.sources && message.sources.length > 0
+      ? `${message.sources.length} source${message.sources.length === 1 ? "" : "s"} used`
+      : null;
+
+  if (!timeLabel && !sourcesLabel) return null;
+
+  return (
+    <p className="mt-2 border-t border-border/60 pt-2 text-[11px] text-muted-foreground tabular-nums">
+      {[timeLabel, sourcesLabel].filter(Boolean).join(" · ")}
+    </p>
   );
 }
 

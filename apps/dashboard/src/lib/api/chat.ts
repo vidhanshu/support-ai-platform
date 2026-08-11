@@ -37,9 +37,19 @@ export type ChatStreamEvent =
   | {
       type: "done";
       data: {
-        message: { id: string; content: string; role: string };
+        message: {
+          id: string;
+          content: string;
+          role: string;
+          responseMs?: number | null;
+        };
         sources: ChatSource[];
-        timings?: unknown;
+        timings?: {
+          totalRequestMs?: number;
+          llmFirstTokenMs?: number | null;
+          llmGenerationMs?: number;
+          [key: string]: unknown;
+        };
         usage?: unknown;
         estimatedCost?: number | null;
       };

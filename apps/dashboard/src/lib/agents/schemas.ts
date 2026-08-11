@@ -1,7 +1,15 @@
 import { z } from "zod";
+import {
+  AGENT_MODEL_IDS,
+} from "@repo/config/agent-models";
 
-export const DEFAULT_AGENT_MODEL = "llama3.1";
-export const DEFAULT_AGENT_TEMPERATURE = 0.2;
+export {
+  AVAILABLE_AGENT_MODELS,
+  AGENT_MODEL_IDS,
+  DEFAULT_AGENT_MODEL,
+  DEFAULT_AGENT_TEMPERATURE,
+  resolveAgentModel,
+} from "@repo/config/agent-models";
 
 export const DEFAULT_AGENT_GENERAL_PROMPT = `### Business Context
 You are a customer support agent for this business. Help users with product questions, account issues, and troubleshooting.
@@ -41,12 +49,8 @@ export const agentInstructionsSchema = z.object({
   guardrailsPrompt: z.string().max(10000, {
     message: "Guardrails prompt must be at most 10000 characters",
   }),
-  model: z.literal(DEFAULT_AGENT_MODEL),
+  model: z.enum(AGENT_MODEL_IDS),
   temperature: z.number().min(0).max(2),
 });
 
 export type AgentInstructionsValues = z.infer<typeof agentInstructionsSchema>;
-
-export const AVAILABLE_AGENT_MODELS = [
-  { value: DEFAULT_AGENT_MODEL, label: "llama3.1" },
-] as const;

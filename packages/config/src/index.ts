@@ -1,5 +1,15 @@
 import fs from "node:fs";
 import path from "node:path";
+import { DEFAULT_AGENT_MODEL, DEFAULT_AGENT_TEMPERATURE } from "./agent-models";
+
+export {
+  AVAILABLE_AGENT_MODELS,
+  AGENT_MODEL_IDS,
+  DEFAULT_AGENT_MODEL,
+  DEFAULT_AGENT_TEMPERATURE,
+  resolveAgentModel,
+  type AgentModelId,
+} from "./agent-models";
 
 /** Absolute path to the monorepo root `.env` file. */
 export function getRootEnvPath(fromDir: string = process.cwd()): string {
@@ -84,9 +94,10 @@ export const PLAN_LIMITS: Record<PlanId, PlanLimits> = {
 } as const;
 
 export const AI_CONFIGS = {
-  DEFAULT_CHAT_MODEL: "llama3.1",
+  /** Mirrors AVAILABLE_AGENT_MODELS[0] — keep in sync via DEFAULT_AGENT_MODEL */
+  DEFAULT_CHAT_MODEL: DEFAULT_AGENT_MODEL,
   DEFAULT_EMBED_MODEL: "nomic-embed-text",
-  DEFAULT_TEMPERATURE: 0.2,
+  DEFAULT_TEMPERATURE: DEFAULT_AGENT_TEMPERATURE,
   /** Recent conversation turns sent to the LLM (excluding current user message) */
   MAX_CONTEXT_MESSAGES: 8,
   /** Final chunks sent to the LLM after dedupe + MMR */

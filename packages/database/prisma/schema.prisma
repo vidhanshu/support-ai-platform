@@ -314,6 +314,8 @@ model Message {
   conversationId String
   role           MessageRole
   content        String
+  /** End-to-end response latency in ms (assistant messages only). */
+  responseMs     Int?
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 

@@ -1,4 +1,5 @@
 import {
+  IsIn,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -8,6 +9,7 @@ import {
   Min,
   MinLength,
 } from "class-validator";
+import { AGENT_MODEL_IDS } from "@repo/config";
 
 export class CreateAgentDto {
   @IsNotEmpty()
@@ -33,6 +35,7 @@ export class CreateAgentDto {
 
   @IsString()
   @IsOptional()
+  @IsIn(AGENT_MODEL_IDS)
   model?: string;
 
   @IsNumber()

@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
-import { AI_CONFIGS } from "@repo/config";
+import { AI_CONFIGS, AVAILABLE_AGENT_MODELS } from "@repo/config";
 import { EmbeddingService } from "./embedding/embedding.service";
 import { LlmService } from "./llm/llm.service";
 
@@ -22,11 +22,20 @@ export class OllamaWarmupService implements OnModuleInit {
 
     try {
       await this.embeddingService.embed("warmup");
-      await this.llmService.generate({
-        messages: [{ role: "user", content: "ping" }],
-        temperature: 0,
-        numCtx: AI_CONFIGS.NUM_CTX,
-      });
+
+      for (const model of AVAILABLE_AGENT_MODELS) {
+        const modelStart = performance.now();
+        await this.llmService.generate({
+          messages: [{ role: "user", content: "ping" }],
+          model: model.value,
+          temperature: 0,
+          numCtx: AI_CONFIGS.NUM_CTX,
+        });
+        this.logger.log(
+          `[perf] ollama warmup model=${model.value} ms=${Math.round(performance.now() - modelStart)}`,
+        );
+      }
+
       this.logger.log(
         `[perf] ollama warmup done total=${Math.round(performance.now() - start)}ms`,
       );

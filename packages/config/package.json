@@ -8,6 +8,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./agent-models": {
+      "types": "./dist/agent-models.d.ts",
+      "default": "./dist/agent-models.js"
     }
   },
   "scripts": {

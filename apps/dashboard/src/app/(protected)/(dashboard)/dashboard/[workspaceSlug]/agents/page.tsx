@@ -9,6 +9,7 @@ import { Skeleton } from "@repo/ui/components/skeleton";
 import NotFound from "@/components/common/not-found";
 import { CreateAgentDialog } from "@/components/dashboard/create-agent-dialog";
 import { useAgents } from "@/hooks/api";
+import { resolveAgentModel } from "@/lib/agents";
 import Image from "next/image";
 
 export default function AgentsPage() {
@@ -74,7 +75,7 @@ export default function AgentsPage() {
                         </p>
                       ) : (
                         <p className="text-sm text-muted-foreground">
-                          {agent.model ?? "llama3.1"}
+                          {resolveAgentModel(agent.model)}
                         </p>
                       )}
                     </div>

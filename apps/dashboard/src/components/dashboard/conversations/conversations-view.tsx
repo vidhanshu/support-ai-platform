@@ -28,7 +28,7 @@ import {
   useConversations,
 } from "@/hooks/api";
 import type { ConversationListItem } from "@/lib/api";
-import { formatRelativeTime } from "@/lib/format";
+import { formatRelativeTime, formatResponseMs } from "@/lib/format";
 import { toastApiError, toastSuccess } from "@/lib/toast";
 
 type ConversationsViewProps = {
@@ -430,7 +430,14 @@ function ConversationDetailPanel({
                         : "text-muted-foreground",
                     )}
                   >
-                    {formatRelativeTime(message.createdAt)}
+                    {[
+                      formatRelativeTime(message.createdAt),
+                      !isUser && message.responseMs != null
+                        ? formatResponseMs(message.responseMs)
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </p>
                 </div>
               );

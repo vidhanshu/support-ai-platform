@@ -30,6 +30,7 @@ import {
   DEFAULT_AGENT_GUARDRAILS_PROMPT,
   DEFAULT_AGENT_MODEL,
   DEFAULT_AGENT_TEMPERATURE,
+  resolveAgentModel,
   type AgentInstructionsValues,
 } from "@/lib/agents";
 import { toastApiError, toastSuccess } from "@/lib/toast";
@@ -59,7 +60,7 @@ export function AgentInstructionsForm({ agentId }: AgentInstructionsFormProps) {
         agentQuery.data.generalPrompt ?? DEFAULT_AGENT_GENERAL_PROMPT,
       guardrailsPrompt:
         agentQuery.data.guardrailsPrompt ?? DEFAULT_AGENT_GUARDRAILS_PROMPT,
-      model: DEFAULT_AGENT_MODEL,
+      model: resolveAgentModel(agentQuery.data.model),
       temperature:
         agentQuery.data.temperature ?? DEFAULT_AGENT_TEMPERATURE,
     });
@@ -82,7 +83,7 @@ export function AgentInstructionsForm({ agentId }: AgentInstructionsFormProps) {
             generalPrompt: agent.generalPrompt ?? values.generalPrompt,
             guardrailsPrompt:
               agent.guardrailsPrompt ?? values.guardrailsPrompt,
-            model: DEFAULT_AGENT_MODEL,
+            model: resolveAgentModel(agent.model),
             temperature: agent.temperature ?? values.temperature,
           });
         },
