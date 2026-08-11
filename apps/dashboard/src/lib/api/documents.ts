@@ -20,6 +20,13 @@ export type CreateUploadUrlResponse = {
   expiresIn?: number;
 };
 
+export type DocumentDownloadUrlResponse = {
+  downloadUrl: string;
+  expiresIn: number;
+  mimeType: string;
+  originalFilename: string;
+};
+
 function resolvePresignedUploadUrl(uploadUrl: unknown): string {
   if (typeof uploadUrl === "string" && /^https?:\/\//i.test(uploadUrl)) {
     return uploadUrl;
@@ -56,6 +63,12 @@ export const documentsApi = {
     apiClient.post<unknown>(`/documents/${documentId}/complete`, undefined, {
       workspace: true,
     }),
+
+  getDownloadUrl: (documentId: string) =>
+    apiClient.get<DocumentDownloadUrlResponse>(
+      `/documents/${documentId}/download-url`,
+      { workspace: true },
+    ),
 
   uploadToPresignedUrl: (
     uploadUrl: string,

@@ -25,6 +25,7 @@ export { documentsApi } from "./documents";
 export type {
   CreateUploadUrlInput,
   CreateUploadUrlResponse,
+  DocumentDownloadUrlResponse,
 } from "./documents";
 export { streamChatMessage } from "./chat";
 export type {

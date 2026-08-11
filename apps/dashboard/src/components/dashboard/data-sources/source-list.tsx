@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Eye,
   FileText,
   Globe,
   Link2,
@@ -29,6 +30,7 @@ type SourceListProps = {
   /** Workspace slug — used to link agent chips when showing attachments. */
   workspaceSlug?: string;
   showAgents?: boolean;
+  onPreview?: (source: KnowledgeSource) => void;
   onDelete?: (id: string) => void;
   onDetach?: (id: string) => void;
   onAttachToAgents?: (source: KnowledgeSource) => void;
@@ -93,6 +95,7 @@ export function SourceList({
   emptyMessage = "No data sources yet.",
   workspaceSlug,
   showAgents = false,
+  onPreview,
   onDelete,
   onDetach,
   onAttachToAgents,
@@ -120,7 +123,9 @@ export function SourceList({
       {sources.map((source) => {
         const title = sourceTitle(source);
         const agents = source.agents ?? [];
-        const hasMenu = Boolean(onDelete || onDetach || onAttachToAgents);
+        const hasMenu = Boolean(
+          onPreview || onDelete || onDetach || onAttachToAgents,
+        );
 
         return (
           <li
@@ -132,7 +137,17 @@ export function SourceList({
             </span>
 
             <div className="min-w-0 flex-1">
-              <p className="truncate font-medium">{title}</p>
+              {onPreview ? (
+                <button
+                  type="button"
+                  onClick={() => onPreview(source)}
+                  className="block max-w-full truncate text-left font-medium hover:underline"
+                >
+                  {title}
+                </button>
+              ) : (
+                <p className="truncate font-medium">{title}</p>
+              )}
               <p className="mt-1 truncate text-sm text-muted-foreground">
                 {sourceMeta(source)}
               </p>
@@ -191,6 +206,15 @@ export function SourceList({
                     <span className="sr-only">Source actions</span>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="min-w-[200px]">
+                    {onPreview ? (
+                      <DropdownMenuItem
+                        disabled={isMutating}
+                        onClick={() => onPreview(source)}
+                      >
+                        <Eye />
+                        Preview
+                      </DropdownMenuItem>
+                    ) : null}
                     {onAttachToAgents ? (
                       <DropdownMenuItem
                         disabled={isMutating}

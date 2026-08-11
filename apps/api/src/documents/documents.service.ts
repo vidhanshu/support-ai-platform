@@ -115,4 +115,31 @@ export class DocumentsService {
       },
     });
   }
+
+  async getDownloadUrl(workspace: WorkspaceContext, documentId: string) {
+    const doc = await this.prisma.document.findFirst({
+      where: {
+        id: documentId,
+        knowledgeSource: { workspaceId: workspace.id },
+      },
+    });
+
+    if (!doc) throw new NotFoundException("Document not found");
+    if (doc.uploadStatus !== UploadStatus.COMPLETED) {
+      throw new BadRequestException("Document is not ready for download");
+    }
+
+    const objectExists = await this.storageService.objectExists(doc.objectKey);
+    if (!objectExists) throw new NotFoundException("Document file not found");
+
+    const { signedUrl, expiresIn } =
+      await this.storageService.generateDownloadUrl(doc.objectKey);
+
+    return {
+      downloadUrl: signedUrl,
+      expiresIn,
+      mimeType: doc.mimeType,
+      originalFilename: doc.originalFilename,
+    };
+  }
 }

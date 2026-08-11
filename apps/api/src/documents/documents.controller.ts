@@ -30,6 +30,14 @@ export class DocumentsController {
     return this.documentsService.complete(workspace, documentId);
   }
 
+  @Get(":id/download-url")
+  getDownloadUrl(
+    @CurrentWorkspace() workspace: WorkspaceContext,
+    @Param("id") documentId: string,
+  ) {
+    return this.documentsService.getDownloadUrl(workspace, documentId);
+  }
+
   @Get()
   findAll(@CurrentWorkspace() workspace: WorkspaceContext) {
     return this.documentsService.findAll(workspace);

@@ -25,6 +25,7 @@ import { AddTextSnippetSheet } from "./add-text-snippet-sheet";
 import { AddWebsiteSheet } from "./add-website-sheet";
 import { AttachToAgentsSheet } from "./attach-to-agents-sheet";
 import { SourceList } from "./source-list";
+import { SourcePreviewSheet } from "./source-preview-sheet";
 
 function sourceTitle(source: KnowledgeSource) {
   return (
@@ -45,6 +46,9 @@ export function WorkspaceDataSourcesView() {
   const [websiteOpen, setWebsiteOpen] = useState(false);
   const [textOpen, setTextOpen] = useState(false);
   const [attachSource, setAttachSource] = useState<KnowledgeSource | null>(
+    null,
+  );
+  const [previewSource, setPreviewSource] = useState<KnowledgeSource | null>(
     null,
   );
   const [search, setSearch] = useState("");
@@ -116,6 +120,15 @@ export function WorkspaceDataSourcesView() {
     if (confirmed) toastSuccess("Source deleted");
   }
 
+  function handlePreview(source: KnowledgeSource) {
+    if (source.type === "WEBSITE") {
+      const url = source.website?.rootUrl;
+      if (url) window.open(url, "_blank", "noopener,noreferrer");
+      return;
+    }
+    setPreviewSource(source);
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -179,6 +192,7 @@ export function WorkspaceDataSourcesView() {
         emptyMessage="No data sources yet. Add a PDF, website, or text snippet to get started."
         workspaceSlug={workspaceSlug}
         showAgents
+        onPreview={handlePreview}
         onDelete={(id) => void handleDelete(id)}
         onAttachToAgents={setAttachSource}
         isMutating={deleteSource.isPending}
@@ -187,6 +201,13 @@ export function WorkspaceDataSourcesView() {
       <AddFileSheet open={fileOpen} onOpenChange={setFileOpen} />
       <AddWebsiteSheet open={websiteOpen} onOpenChange={setWebsiteOpen} />
       <AddTextSnippetSheet open={textOpen} onOpenChange={setTextOpen} />
+      <SourcePreviewSheet
+        source={previewSource}
+        open={Boolean(previewSource)}
+        onOpenChange={(open) => {
+          if (!open) setPreviewSource(null);
+        }}
+      />
       <AttachToAgentsSheet
         open={Boolean(attachSource)}
         onOpenChange={(open) => {

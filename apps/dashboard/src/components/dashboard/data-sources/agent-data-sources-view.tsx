@@ -20,6 +20,7 @@ import { formatBytes } from "@/lib/knowledge/constants";
 import { toastApiError, toastSuccess } from "@/lib/toast";
 import { AttachSourcesSheet } from "./attach-sources-sheet";
 import { SourceList } from "./source-list";
+import { SourcePreviewSheet } from "./source-preview-sheet";
 
 type AgentDataSourcesViewProps = {
   agentId: string;
@@ -41,6 +42,9 @@ export function AgentDataSourcesView({ agentId }: AgentDataSourcesViewProps) {
   const { confirm, confirmationDialog } = useConfirmDialog();
 
   const [attachOpen, setAttachOpen] = useState(false);
+  const [previewSource, setPreviewSource] = useState<KnowledgeSource | null>(
+    null,
+  );
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<
     "all" | "DOCUMENT" | "WEBSITE" | "TEXT_SNIPPET"
@@ -120,6 +124,15 @@ export function AgentDataSourcesView({ agentId }: AgentDataSourcesViewProps) {
     if (confirmed) toastSuccess("Source detached");
   }
 
+  function handlePreview(source: KnowledgeSource) {
+    if (source.type === "WEBSITE") {
+      const url = source.website?.rootUrl;
+      if (url) window.open(url, "_blank", "noopener,noreferrer");
+      return;
+    }
+    setPreviewSource(source);
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -189,6 +202,7 @@ export function AgentDataSourcesView({ agentId }: AgentDataSourcesViewProps) {
         sources={sources as KnowledgeSource[]}
         isLoading={agentQuery.isLoading}
         emptyMessage="No sources linked yet. Attach an existing workspace source, or create a new one."
+        onPreview={handlePreview}
         onDetach={(id) => void handleDetach(id)}
         isMutating={detachSource.isPending}
       />
@@ -198,6 +212,13 @@ export function AgentDataSourcesView({ agentId }: AgentDataSourcesViewProps) {
         onOpenChange={setAttachOpen}
         agentId={agentId}
         attachedIds={attachedIds}
+      />
+      <SourcePreviewSheet
+        source={previewSource}
+        open={Boolean(previewSource)}
+        onOpenChange={(open) => {
+          if (!open) setPreviewSource(null);
+        }}
       />
 
       {confirmationDialog}
