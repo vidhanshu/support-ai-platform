@@ -15,7 +15,7 @@ import {
   saveAuthTokens,
   type AuthTokens,
 } from "@/lib/auth/tokens";
-import { API_BASE_URL, API_HEADERS } from "./constants";
+import { API_BASE_URL, API_HEADERS, NGROK_SKIP_BROWSER_WARNING } from "./constants";
 import { ApiError, extractApiErrorCode, extractApiErrorMessage } from "./errors";
 
 export type UploadProgress = {
@@ -146,6 +146,7 @@ function createApiClient(): AxiosInstance {
     timeout: 30_000,
     headers: {
       Accept: "application/json",
+      ...NGROK_SKIP_BROWSER_WARNING,
     },
   });
 

@@ -1,4 +1,4 @@
-import { API_BASE_URL, API_HEADERS } from "./constants";
+import { API_BASE_URL, API_HEADERS, NGROK_SKIP_BROWSER_WARNING } from "./constants";
 import { refreshSession } from "./client";
 import { ApiError, extractApiErrorCode, extractApiErrorMessage } from "./errors";
 import { getAccessToken, getWorkspaceId } from "@/lib/auth/tokens";
@@ -107,6 +107,7 @@ function buildChatHeaders(): HeadersInit {
     "Content-Type": "application/json",
     Authorization: `Bearer ${accessToken}`,
     [API_HEADERS.WORKSPACE_ID]: workspaceId,
+    ...NGROK_SKIP_BROWSER_WARNING,
   };
 }
 
