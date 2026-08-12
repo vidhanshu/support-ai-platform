@@ -39,6 +39,12 @@ export const ENV_KEYS = {
   JWT_ACCESS_SECRET: "JWT_ACCESS_SECRET",
   JWT_REFRESH_SECRET: "JWT_REFRESH_SECRET",
   MINIO_ENDPOINT_URL: "MINIO_ENDPOINT_URL",
+  /**
+   * Optional browser-facing MinIO base URL (e.g. http://localhost:9000).
+   * When set, signed upload/download URLs are rewritten to this host so the
+   * browser can reach MinIO while the API still talks to the internal endpoint.
+   */
+  MINIO_PUBLIC_ENDPOINT_URL: "MINIO_PUBLIC_ENDPOINT_URL",
   MINIO_ENDPOINT: "MINIO_ENDPOINT",
   MINIO_PORT: "MINIO_PORT",
   MINIO_ACCESS_KEY: "MINIO_ACCESS_KEY",

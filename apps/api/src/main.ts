@@ -20,8 +20,13 @@ async function bootstrap(): Promise<void> {
   const port = Number(configService.get<string>("API_PORT") ?? 3001);
 
   // cors
+  const allowedOrigins =
+    configService.get<string>("ALLOWED_ORIGINS")?.split(",") ?? [];
   app.enableCors({
-    origin: ["http://localhost:3000"],
+    origin:
+      process.env.NODE_ENV === "production"
+        ? allowedOrigins
+        : ["http://localhost:3000"],
   });
 
   // validation — transform is required for whitelist + class-validator to run
@@ -50,7 +55,7 @@ async function bootstrap(): Promise<void> {
 
   // logger
   app.useLogger(["log", "error", "warn", "debug", "verbose"]);
-  
+
   await app.listen(port);
   console.log(`API listening on http://localhost:${port}`);
 }

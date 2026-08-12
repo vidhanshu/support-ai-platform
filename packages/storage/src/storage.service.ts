@@ -32,9 +32,29 @@ export class StorageService {
     this.client = new S3Client(minioConfig);
   }
 
-  async generateUploadUrl(objectKey: string, contentType: string) {
-    console.log("bucket", this.configService.getOrThrow(ENV_KEYS.MINIO_BUCKET));
+  /**
+   * Rewrite signed URL host for browser access when MinIO is reached
+   * internally via Docker DNS (`http://minio:9000`) but clients use
+   * localhost / a public hostname.
+   */
+  private toBrowserUrl(signedUrl: string) {
+    const publicBase = this.configService.get<string>(
+      ENV_KEYS.MINIO_PUBLIC_ENDPOINT_URL,
+    );
+    if (!publicBase) return signedUrl;
 
+    try {
+      const signed = new URL(signedUrl);
+      const pub = new URL(publicBase);
+      signed.protocol = pub.protocol;
+      signed.host = pub.host;
+      return signed.toString();
+    } catch {
+      return signedUrl;
+    }
+  }
+
+  async generateUploadUrl(objectKey: string, contentType: string) {
     const command = new PutObjectCommand({
       Bucket: this.configService.getOrThrow(ENV_KEYS.MINIO_BUCKET),
       Key: objectKey,
@@ -46,7 +66,7 @@ export class StorageService {
     });
 
     return {
-      signedUrl,
+      signedUrl: this.toBrowserUrl(signedUrl),
       expiresIn: STORAGE_CONFIGS.UPLOAD_URL_EXPIRATION_SECONDS,
     };
   }
@@ -62,7 +82,7 @@ export class StorageService {
     });
 
     return {
-      signedUrl,
+      signedUrl: this.toBrowserUrl(signedUrl),
       expiresIn: STORAGE_CONFIGS.DOWNLOAD_URL_EXPIRATION_SECONDS,
     };
   }

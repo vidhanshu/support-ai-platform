@@ -1,3 +1,18 @@
+x-app-environment: &app-environment
+  NODE_ENV: production
+  # Docker DNS names (override host .env localhost values)
+  DATABASE_URL: postgresql://postgres:postgres@postgres:5432/support_ai?schema=public
+  REDIS_URL: redis://redis:6379
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  OLLAMA_BASE_URL: http://ollama:11434
+  # Internal MinIO for server-side S3 calls
+  MINIO_ENDPOINT_URL: http://minio:9000
+  MINIO_ENDPOINT: minio
+  MINIO_PORT: "9000"
+  # Browser-facing MinIO (dashboard / Vercel). On EC2 use http://YOUR_PUBLIC_IP:9000
+  MINIO_PUBLIC_ENDPOINT_URL: ${MINIO_PUBLIC_ENDPOINT_URL:-http://localhost:9000}
+
 services:
   postgres:
     image: pgvector/pgvector:pg16
@@ -39,8 +54,8 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
@@ -51,6 +66,25 @@ services:
       retries: 5
       start_period: 10s
 
+  minio-init:
+    image: minio/mc:latest
+    container_name: support-ai-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        mc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}"
+        mc mb --ignore-existing "local/$${MINIO_BUCKET}"
+        echo "MinIO bucket ready: $${MINIO_BUCKET}"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_BUCKET: ${MINIO_BUCKET:-support-ai}
+    restart: "no"
+
   ollama:
     image: ollama/ollama:latest
     container_name: support-ai-ollama
@@ -58,13 +92,112 @@ services:
     ports:
       - "11434:11434"
     environment:
-      # Keep chat + embed models resident so requests don't pay ~50s reload/swap
       OLLAMA_KEEP_ALIVE: "-1"
       OLLAMA_MAX_LOADED_MODELS: "2"
-      # Match AI_CONFIGS.NUM_CTX so chat requests don't force a model reload
       OLLAMA_CONTEXT_LENGTH: "4096"
     volumes:
       - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: support-ai-ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        echo "Pulling Ollama models (first run can take a while)..."
+        ollama pull nomic-embed-text
+        ollama pull llama3.1
+        ollama pull qwen2.5
+        echo "Ollama models ready."
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      args:
+        NODE_VERSION: "22"
+        APP_DIR: api
+        APP_FILTER: "@repo/api"
+    container_name: support-ai-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-3001}:3001"
+    env_file:
+      - .env
+    environment:
+      <<: *app-environment
+      API_PORT: "3001"
+      RUN_MIGRATIONS: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+      ollama:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3001/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+      args:
+        NODE_VERSION: "22"
+        APP_DIR: worker
+        APP_FILTER: "@repo/worker"
+    container_name: support-ai-worker
+    restart: unless-stopped
+    ports:
+      - "${WORKER_PORT:-3002}:3002"
+    env_file:
+      - .env
+    environment:
+      <<: *app-environment
+      WORKER_PORT: "3002"
+      RUN_MIGRATIONS: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+      ollama:
+        condition: service_healthy
+      ollama-init:
+        condition: service_completed_successfully
+      api:
+        condition: service_healthy
 
 volumes:
   postgres_data:
