@@ -118,8 +118,7 @@ services:
         set -e
         echo "Pulling Ollama models (first run can take a while)..."
         ollama pull nomic-embed-text
-        ollama pull llama3.1
-        ollama pull qwen2.5
+        ollama pull qwen2.5:3b
         echo "Ollama models ready."
     restart: "no"
 

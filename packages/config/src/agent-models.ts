@@ -3,8 +3,7 @@
  * Keep isomorphic (no Node APIs) so dashboard client code can import this.
  */
 export const AVAILABLE_AGENT_MODELS = [
-  { value: "llama3.1", label: "llama3.1" },
-  { value: "qwen2.5:3b", label: "qwen2.5" },
+  { value: "qwen2.5:3b", label: "qwen2.5:3b" },
 ] as const;
 
 export type AgentModelId = (typeof AVAILABLE_AGENT_MODELS)[number]["value"];
