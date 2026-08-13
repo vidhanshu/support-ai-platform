@@ -7,7 +7,8 @@ dist
 .next
 .turbo
 out
-build
+# Root-only (do not ignore App Router routes named `build`)
+/build
 *.tsbuildinfo
 
 # Environment
