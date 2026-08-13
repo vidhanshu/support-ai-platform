@@ -4,11 +4,15 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
+  Logger,
 } from "@nestjs/common";
 import { Request, Response } from "express";
+import Stripe from "stripe";
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(HttpExceptionFilter.name);
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
 
@@ -34,6 +38,20 @@ export class HttpExceptionFilter implements ExceptionFilter {
         message = body.message ?? message;
         code = body.code;
       }
+    } else if (exception instanceof Stripe.errors.StripeError) {
+      status = HttpStatus.BAD_REQUEST;
+      message = exception.message;
+      code = exception.code;
+      this.logger.error(
+        `Stripe error on ${request.method} ${request.url}: ${exception.message}`,
+      );
+    } else {
+      const detail =
+        exception instanceof Error ? exception.message : String(exception);
+      this.logger.error(
+        `Unhandled error on ${request.method} ${request.url}: ${detail}`,
+        exception instanceof Error ? exception.stack : undefined,
+      );
     }
 
     response.status(status).json({

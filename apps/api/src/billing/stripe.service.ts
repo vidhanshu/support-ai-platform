@@ -56,6 +56,21 @@ export class StripeService {
     });
   }
 
+  async customerExists(customerId: string): Promise<boolean> {
+    try {
+      const customer = await this.stripe.customers.retrieve(customerId);
+      return !("deleted" in customer && customer.deleted);
+    } catch (error) {
+      if (
+        error instanceof Stripe.errors.StripeInvalidRequestError &&
+        error.code === "resource_missing"
+      ) {
+        return false;
+      }
+      throw error;
+    }
+  }
+
   async createCheckoutSession(input: {
     customerId: string;
     priceId: string;

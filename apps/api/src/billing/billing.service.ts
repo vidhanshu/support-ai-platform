@@ -237,7 +237,14 @@ export class BillingService {
     subscriptionRowId: string,
     existingCustomerId: string | null,
   ) {
-    if (existingCustomerId) return existingCustomerId;
+    if (existingCustomerId) {
+      // Stale IDs (e.g. from another Stripe account/key) break Checkout — recreate.
+      const stillValid = await this.stripe.customerExists(existingCustomerId);
+      if (stillValid) return existingCustomerId;
+      this.logger.warn(
+        `Stripe customer ${existingCustomerId} missing; creating a new one for workspace=${workspace.id}`,
+      );
+    }
 
     const customer = await this.stripe.createCustomer({
       email: user.email,
