@@ -7,6 +7,8 @@ export {
   AGENT_MODEL_IDS,
   DEFAULT_AGENT_MODEL,
   DEFAULT_AGENT_TEMPERATURE,
+  OLLAMA_AGENT_MODEL_IDS,
+  isOllamaAgentModel,
   resolveAgentModel,
   type AgentModelId,
 } from "./agent-models";
@@ -34,6 +36,10 @@ export const ENV_KEYS = {
   OLLAMA_BASE_URL: "OLLAMA_BASE_URL",
   OLLAMA_CHAT_MODEL: "OLLAMA_CHAT_MODEL",
   OLLAMA_EMBED_MODEL: "OLLAMA_EMBED_MODEL",
+  /** `groq` | `ollama` — chat/reasoning provider (embeddings stay on Ollama) */
+  LLM_PROVIDER: "LLM_PROVIDER",
+  GROQ_API_KEY: "GROQ_API_KEY",
+  GROQ_CHAT_MODEL: "GROQ_CHAT_MODEL",
   API_PORT: "API_PORT",
   WORKER_PORT: "WORKER_PORT",
   JWT_ACCESS_SECRET: "JWT_ACCESS_SECRET",

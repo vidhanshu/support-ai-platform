@@ -182,7 +182,7 @@ model Agent {
   isActive         Boolean  @default(true)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
-  model            String?  @default("qwen2.5:3b")
+  model            String?  @default("openai/gpt-oss-20b")
   temperature      Float?   @default(0.2)
   createdBy        User     @relation(fields: [createdById], references: [id], onDelete: Restrict)
   createdById      String

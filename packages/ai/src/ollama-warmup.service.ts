@@ -4,8 +4,8 @@ import { EmbeddingService } from "./embedding/embedding.service";
 import { LlmService } from "./llm/llm.service";
 
 /**
- * Preloads embed + chat models into Ollama on API boot so the first
- * user request does not pay a cold model-load (~30-60s on CPU).
+ * Warms embedding (Ollama) + a single chat ping through the configured
+ * LLM provider (Groq or Ollama) so the first user request is faster.
  */
 @Injectable()
 export class OllamaWarmupService implements OnModuleInit {
@@ -19,35 +19,35 @@ export class OllamaWarmupService implements OnModuleInit {
   async onModuleInit() {
     // Worker + API both import AiModule; warming from both can OOM small EC2 hosts.
     if (process.env.OLLAMA_WARMUP === "false") {
-      this.logger.log("[perf] ollama warmup skipped (OLLAMA_WARMUP=false)");
+      this.logger.log("[perf] ai warmup skipped (OLLAMA_WARMUP=false)");
       return;
     }
 
     const start = performance.now();
-    this.logger.log("[perf] ollama warmup start");
+    this.logger.log("[perf] ai warmup start");
 
     try {
       await this.embeddingService.embed("warmup");
 
-      for (const model of AVAILABLE_AGENT_MODELS) {
-        const modelStart = performance.now();
-        await this.llmService.generate({
-          messages: [{ role: "user", content: "ping" }],
-          model: model.value,
-          temperature: 0,
-          numCtx: AI_CONFIGS.NUM_CTX,
-        });
-        this.logger.log(
-          `[perf] ollama warmup model=${model.value} ms=${Math.round(performance.now() - modelStart)}`,
-        );
-      }
+      // One chat ping with the default model (avoid burning Groq quota on every model).
+      const model = AVAILABLE_AGENT_MODELS[0].value;
+      const modelStart = performance.now();
+      await this.llmService.generate({
+        messages: [{ role: "user", content: "ping" }],
+        model,
+        temperature: 0,
+        numCtx: AI_CONFIGS.NUM_CTX,
+      });
+      this.logger.log(
+        `[perf] ai warmup chat model=${model} ms=${Math.round(performance.now() - modelStart)}`,
+      );
 
       this.logger.log(
-        `[perf] ollama warmup done total=${Math.round(performance.now() - start)}ms`,
+        `[perf] ai warmup done total=${Math.round(performance.now() - start)}ms`,
       );
     } catch (error) {
       this.logger.warn(
-        `[perf] ollama warmup failed after=${Math.round(performance.now() - start)}ms: ${
+        `[perf] ai warmup failed after=${Math.round(performance.now() - start)}ms: ${
           error instanceof Error ? error.message : String(error)
         }`,
       );

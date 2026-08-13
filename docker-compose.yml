@@ -118,7 +118,7 @@ services:
     command:
       - |
         set -e
-        echo "Pulling Ollama models (first run can take a while)..."
+        echo "Pulling Ollama models (embed + optional local chat)..."
         ollama pull nomic-embed-text
         ollama pull qwen2.5:3b
         echo "Ollama models ready."

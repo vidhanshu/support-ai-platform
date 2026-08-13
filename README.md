@@ -19,7 +19,7 @@ cp .env.example .env   # first time only — edit secrets
 docker compose up -d --build
 ```
 
-First run pulls Ollama models (`qwen2.5:3b`, `nomic-embed-text`) and can take a while.
+First run pulls Ollama models (`nomic-embed-text`, `qwen2.5:3b`). With `LLM_PROVIDER=groq`, cloud models use Groq and `qwen2.5:3b` still runs on Ollama.
 
 | Service | URL |
 |---|---|
