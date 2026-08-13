@@ -12,7 +12,7 @@ const InitialsAvatar = ({
 }: { name: string } & AvatarRootProps) => {
   return (
     <Avatar {...props}>
-      <AvatarFallback className="text-xs bg-background text-foreground group-hover:text-white! font-medium rounded-md">
+      <AvatarFallback className="text-xs bg-black text-white group-hover:text-white! font-medium rounded-md">
         {getInitials(name)}
       </AvatarFallback>
     </Avatar>
