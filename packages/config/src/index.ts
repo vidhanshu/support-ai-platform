@@ -114,7 +114,7 @@ export const AI_CONFIGS = {
   MMR_LAMBDA: 0.7,
   MAX_CHUNK_CHARS: 1000,
   /** Must be large enough to fit system prompt + retrieved chunks */
-  NUM_CTX: 4096,
+  NUM_CTX: 2048,
 } as const;
 
 export const JWT_CONFIGS = {

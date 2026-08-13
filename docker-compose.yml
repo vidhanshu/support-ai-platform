@@ -92,9 +92,11 @@ services:
     ports:
       - "11434:11434"
     environment:
-      OLLAMA_KEEP_ALIVE: "-1"
-      OLLAMA_MAX_LOADED_MODELS: "2"
-      OLLAMA_CONTEXT_LENGTH: "4096"
+      # Keep memory low on small EC2 hosts (signal: killed = OOM).
+      # Unload idle models; only keep one loaded at a time.
+      OLLAMA_KEEP_ALIVE: "5m"
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_CONTEXT_LENGTH: "2048"
     volumes:
       - ollama_data:/root/.ollama
     healthcheck:
@@ -140,6 +142,7 @@ services:
       <<: *app-environment
       API_PORT: "3001"
       RUN_MIGRATIONS: "true"
+      OLLAMA_WARMUP: "true"
     depends_on:
       postgres:
         condition: service_healthy
@@ -182,6 +185,8 @@ services:
       <<: *app-environment
       WORKER_PORT: "3002"
       RUN_MIGRATIONS: "false"
+      # Avoid double model load with API (OOM on small instances)
+      OLLAMA_WARMUP: "false"
     depends_on:
       postgres:
         condition: service_healthy

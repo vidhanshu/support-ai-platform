@@ -17,6 +17,12 @@ export class OllamaWarmupService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
+    // Worker + API both import AiModule; warming from both can OOM small EC2 hosts.
+    if (process.env.OLLAMA_WARMUP === "false") {
+      this.logger.log("[perf] ollama warmup skipped (OLLAMA_WARMUP=false)");
+      return;
+    }
+
     const start = performance.now();
     this.logger.log("[perf] ollama warmup start");
 
