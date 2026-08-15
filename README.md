@@ -176,11 +176,13 @@ npm install @support-ai/sdk
 ```
 
 ```tsx
-import { SupportAIProvider, ChatPanel } from "@support-ai/sdk/react";
+import { SupportAIProvider, ChatBubble } from "@support-ai/sdk/react";
 
 <SupportAIProvider agentId="…" apiKey="…" apiUrl="https://YOUR_API/v1">
-  <ChatPanel />
+  <ChatBubble position="bottom-right" />
 </SupportAIProvider>
 ```
+
+Mount once in your app root/layout for a site-wide floating bubble. Use `ChatPanel` only when you want an inline chat page.
 
 `useChat()` is available for a fully custom UI. Core-only (no React): `import { createClient } from "@support-ai/sdk"`.

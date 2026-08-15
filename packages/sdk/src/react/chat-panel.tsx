@@ -12,6 +12,8 @@ export type ChatPanelProps = {
   placeholder?: string;
   className?: string;
   style?: CSSProperties;
+  /** Shown in the header (e.g. close for ChatBubble). */
+  onClose?: () => void;
 };
 
 function normalizeContent(content: string): string {
@@ -177,6 +179,7 @@ export function ChatPanel({
   placeholder = "Type your message…",
   className,
   style,
+  onClose,
 }: ChatPanelProps) {
   const { agent, messages, status, isStreaming, error, sendMessage, reset } =
     useChat();
@@ -220,27 +223,49 @@ export function ChatPanel({
           color: "#fff",
         }}
       >
-        <div>
+        <div style={{ minWidth: 0, flex: 1 }}>
           <div style={{ fontWeight: 600, fontSize: 15 }}>{headerTitle}</div>
           {agent?.description ? (
             <div style={{ fontSize: 12, opacity: 0.85 }}>{agent.description}</div>
           ) : null}
         </div>
-        <button
-          type="button"
-          onClick={reset}
-          style={{
-            border: 0,
-            background: "rgba(255,255,255,0.15)",
-            color: "inherit",
-            borderRadius: 8,
-            padding: "6px 10px",
-            cursor: "pointer",
-            fontSize: 12,
-          }}
-        >
-          New chat
-        </button>
+        <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+          <button
+            type="button"
+            onClick={reset}
+            style={{
+              border: 0,
+              background: "rgba(255,255,255,0.15)",
+              color: "#fff",
+              borderRadius: 8,
+              padding: "6px 10px",
+              cursor: "pointer",
+              fontSize: 12,
+            }}
+          >
+            New chat
+          </button>
+          {onClose ? (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close chat"
+              style={{
+                border: 0,
+                background: "rgba(255,255,255,0.15)",
+                color: "#fff",
+                borderRadius: 8,
+                width: 32,
+                height: 32,
+                cursor: "pointer",
+                fontSize: 18,
+                lineHeight: 1,
+              }}
+            >
+              ×
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div

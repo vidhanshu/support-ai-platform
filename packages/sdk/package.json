@@ -1,7 +1,7 @@
 {
   "name": "@support-ai/sdk",
-  "version": "0.1.0",
-  "description": "Support AI SDK — public chat client + React hooks and ChatPanel",
+  "version": "0.1.1",
+  "description": "Support AI SDK — public chat client, React ChatBubble + ChatPanel",
   "license": "MIT",
   "author": "Support AI Platform",
   "type": "module",

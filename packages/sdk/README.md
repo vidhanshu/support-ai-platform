@@ -26,22 +26,38 @@ const client = createClient({
 });
 ```
 
-## React
+## React — floating chat bubble (recommended)
+
+Same UX as the website widget: launcher button + panel.
 
 ```tsx
-import { SupportAIProvider, ChatPanel } from "@support-ai/sdk/react";
+import { SupportAIProvider, ChatBubble } from "@support-ai/sdk/react";
 
-export function Help() {
+export function SupportWidget() {
   return (
     <SupportAIProvider
       agentId="YOUR_AGENT_ID"
       apiKey={process.env.NEXT_PUBLIC_SUPPORT_AI_KEY!}
       apiUrl="https://YOUR_API/v1"
     >
-      <ChatPanel />
+      <ChatBubble position="bottom-right" />
     </SupportAIProvider>
   );
 }
+```
+
+Put `<SupportWidget />` once in your root layout (e.g. Next.js `app/layout.tsx`) so it floats on every page.
+
+## React — inline panel
+
+For a dedicated `/support` page (not floating):
+
+```tsx
+import { SupportAIProvider, ChatPanel } from "@support-ai/sdk/react";
+
+<SupportAIProvider agentId="…" apiKey="…" apiUrl="https://YOUR_API/v1">
+  <ChatPanel />
+</SupportAIProvider>
 ```
 
 Custom UI with `useChat()`:

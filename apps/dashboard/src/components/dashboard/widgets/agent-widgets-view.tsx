@@ -49,19 +49,21 @@ export function AgentWidgetsView({ agentId }: AgentWidgetsViewProps) {
   );
 
   const sdkSnippet = useMemo(
-    () => `import { SupportAIProvider, ChatPanel } from "@support-ai/sdk/react";
+    () => `import { SupportAIProvider, ChatBubble } from "@support-ai/sdk/react";
 
-export function Help() {
+export function SupportWidget() {
   return (
     <SupportAIProvider
       agentId="${agentId}"
       apiKey={process.env.NEXT_PUBLIC_SUPPORT_AI_KEY!}
       apiUrl="${API_BASE_URL}"
     >
-      <ChatPanel />
+      <ChatBubble position="bottom-right" />
     </SupportAIProvider>
   );
-}`,
+}
+
+// Mount once in your root layout so the bubble floats site-wide.`,
     [agentId],
   );
 
@@ -125,7 +127,7 @@ export function Help() {
 
       <SnippetBlock
         title="4. React SDK"
-        description="npm install @support-ai/sdk — SupportAIProvider + ChatPanel (or useChat for a custom UI)."
+        description="npm install @support-ai/sdk — floating ChatBubble (launcher + panel). Use ChatPanel only for an inline /support page."
         code={sdkSnippet}
         onCopy={() => void copyText("SDK snippet", sdkSnippet)}
       />
