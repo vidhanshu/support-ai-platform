@@ -14,6 +14,8 @@ import { ChatModule } from './chat/chat.module';
 import { ConversationModule } from './conversation/conversation.module';
 import { KnowledgeSourcesModule } from './knowledge-sources/knowledge-sources.module';
 import { BillingModule } from './billing/billing.module';
+import { ApiKeysModule } from './api-keys/api-keys.module';
+import { PublicModule } from './public/public.module';
 
 @Module({
   imports: [
@@ -35,6 +37,7 @@ import { BillingModule } from './billing/billing.module';
     AuthModule,
     WorkspaceModule,
     AgentsModule,
+    ApiKeysModule,
     InvitationsModule,
     DocumentsModule,
     CommonModule,
@@ -42,6 +45,7 @@ import { BillingModule } from './billing/billing.module';
     ConversationModule,
     KnowledgeSourcesModule,
     BillingModule,
+    PublicModule,
   ],
 })
 export class AppModule {}

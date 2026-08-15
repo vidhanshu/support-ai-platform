@@ -38,6 +38,16 @@ export class HttpExceptionFilter implements ExceptionFilter {
         message = body.message ?? message;
         code = body.code;
       }
+      // TooManyRequestsException often nests message in the body object
+      if (
+        Array.isArray(message) === false &&
+        typeof message === "object" &&
+        message &&
+        "message" in message
+      ) {
+        const nested = (message as { message?: string | string[] }).message;
+        if (nested) message = nested;
+      }
     } else if (exception instanceof Stripe.errors.StripeError) {
       status = HttpStatus.BAD_REQUEST;
       message = exception.message;

@@ -13,3 +13,24 @@ export interface WorkspaceContext {
   slug: string;
   role: WorkspaceRole;
 }
+
+export type PublicApiKeyContext = {
+  id: string;
+  agentId: string;
+  workspaceId: string;
+  allowedOrigins: string[];
+  rateLimitRpm: number;
+};
+
+export type PublicAgentContext = {
+  id: string;
+  workspaceId: string;
+  name: string;
+  description: string | null;
+  isActive: boolean;
+};
+
+export interface PublicApiRequest extends Request {
+  apiKey: PublicApiKeyContext;
+  publicAgent: PublicAgentContext;
+}

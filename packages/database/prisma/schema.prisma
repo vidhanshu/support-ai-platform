@@ -190,9 +190,32 @@ model Agent {
   workspace        Workspace              @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   conversations    Conversation[]
   knowledgeSources AgentKnowledgeSource[]
+  apiKeys          AgentApiKey[]
 
   @@index([workspaceId])
   @@index([createdById])
+}
+
+model AgentApiKey {
+  id     String @id @default(uuid())
+  agentId String
+
+  name           String
+  keyPrefix      String
+  keyHash        String   @unique
+  allowedOrigins String[]
+  rateLimitRpm   Int      @default(60)
+
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([keyHash])
 }
 
 // many-to-many relationship between Agents and KnowledgeSources

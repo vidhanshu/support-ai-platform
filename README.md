@@ -77,3 +77,43 @@ apps/worker       NestJS background worker (Docker)
 apps/dashboard    Next.js dashboard (Vercel / local)
 packages/*        Shared libraries (built into api/worker images)
 ```
+
+## Public Chat API (website embed)
+
+Per-agent API keys power a public chat surface for the future website SDK. Create keys under **API keys** in the agent sidebar (not under Build → Widgets).
+
+### Auth
+
+```http
+Authorization: Bearer sak_live_…   # or sak_test_…
+# or
+X-Api-Key: sak_live_…
+```
+
+Keys are shown **once** at creation. Only a hash is stored. Each key has `allowedOrigins` (required); browser calls must send a matching `Origin`.
+
+### Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/v1/public/agents/:agentId` | Bootstrap: `id`, `name`, `description` |
+| `POST` | `/v1/public/agents/:agentId/chat` | SSE chat stream (same event shape as dashboard chat) |
+
+Chat body:
+
+```json
+{ "message": "Hello", "conversationId": "<optional uuid>" }
+```
+
+SSE events: `status`, `retrieval`, `meta`, `token`, `done`, `error` (JSON in `data:` lines).
+
+### Limits & errors
+
+| Code | When |
+|------|------|
+| `401` | Missing / invalid / revoked key, or key not for this agent |
+| `403` | Agent inactive, or `Origin` not in key’s `allowedOrigins` |
+| `429` | Per-key RPM exceeded (`Retry-After` header; body `code: RATE_LIMIT_EXCEEDED`) |
+| `400` | Plan chat quota / no ready knowledge sources / inactive agent |
+
+Monthly chat quotas still come from the workspace plan (FREE / HOBBY / PRO).

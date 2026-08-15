@@ -45,3 +45,8 @@ export {
   useBulkDeleteConversations,
 } from "./use-conversations";
 export { useBilling, useCheckout, useChangePlan } from "./use-billing";
+export {
+  useAgentApiKeys,
+  useCreateAgentApiKey,
+  useRevokeAgentApiKey,
+} from "./use-api-keys";

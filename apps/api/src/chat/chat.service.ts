@@ -120,16 +120,38 @@ export class ChatService {
     agentId: string,
     dto: SendMessageDto,
   ): AsyncGenerator<ChatStreamEvent> {
+    yield* this.streamChat(workspace.id, agentId, dto, {
+      requireActive: false,
+    });
+  }
+
+  /** Public / widget chat — API-key authenticated, no dashboard user. */
+  async *streamPublicMessage(
+    workspaceId: string,
+    agentId: string,
+    dto: SendMessageDto,
+  ): AsyncGenerator<ChatStreamEvent> {
+    yield* this.streamChat(workspaceId, agentId, dto, {
+      requireActive: true,
+    });
+  }
+
+  private async *streamChat(
+    workspaceId: string,
+    agentId: string,
+    dto: SendMessageDto,
+    options: { requireActive: boolean },
+  ): AsyncGenerator<ChatStreamEvent> {
     const totalStart = performance.now();
 
     // Fail before opening the SSE stream so the client gets a normal JSON body.
-    await this.planLimits.assertCanSendChatMessage(workspace.id);
-    await this.assertAgentReadyForChat(workspace.id, agentId);
+    await this.planLimits.assertCanSendChatMessage(workspaceId);
+    await this.assertAgentReadyForChat(workspaceId, agentId, options);
 
     yield { type: "status", data: { stage: "started", ms: 0 } };
     yield { type: "status", data: { stage: "retrieving" } };
 
-    const prepared = await this.prepareChat(workspace, agentId, dto);
+    const prepared = await this.prepareChat(workspaceId, agentId, dto);
 
     yield {
       type: "retrieval",
@@ -249,12 +271,16 @@ export class ChatService {
   private async assertAgentReadyForChat(
     workspaceId: string,
     agentId: string,
+    options: { requireActive: boolean } = { requireActive: false },
   ) {
     const agent = await this.prismaService.agent.findFirst({
       where: { id: agentId, workspaceId },
-      select: { id: true },
+      select: { id: true, isActive: true },
     });
     if (!agent) throw new NotFoundException("Agent not found");
+    if (options.requireActive && !agent.isActive) {
+      throw new BadRequestException("Agent is inactive");
+    }
 
     const readySourceCount =
       await this.prismaService.agentKnowledgeSource.count({
@@ -271,14 +297,14 @@ export class ChatService {
   }
 
   private async prepareChat(
-    workspace: WorkspaceContext,
+    workspaceId: string,
     agentId: string,
     dto: SendMessageDto,
   ): Promise<PreparedChat> {
     const { message, conversationId } = dto;
 
     const agent = await this.prismaService.agent.findFirst({
-      where: { id: agentId, workspaceId: workspace.id },
+      where: { id: agentId, workspaceId },
     });
     if (!agent) throw new NotFoundException("Agent not found");
 
@@ -287,7 +313,7 @@ export class ChatService {
       conversation = await this.prismaService.conversation.create({
         data: {
           agentId,
-          workspaceId: workspace.id,
+          workspaceId,
           title: message.slice(0, 80),
         },
       });
@@ -295,7 +321,7 @@ export class ChatService {
       conversation = await this.prismaService.conversation.findFirst({
         where: {
           id: conversationId,
-          workspaceId: workspace.id,
+          workspaceId,
           agentId,
         },
       });
@@ -310,7 +336,7 @@ export class ChatService {
       },
     });
 
-    await this.planLimits.incrementChatMessages(workspace.id);
+    await this.planLimits.incrementChatMessages(workspaceId);
 
     const historyResult = await this.conversationContextBuilder.build(
       conversation.id,

@@ -37,6 +37,8 @@ export const queryKeys = {
       [...queryKeys.agents.all(workspaceId), "list"] as const,
     detail: (workspaceId: string, id: string) =>
       [...queryKeys.agents.all(workspaceId), "detail", id] as const,
+    apiKeys: (workspaceId: string, agentId: string) =>
+      [...queryKeys.agents.all(workspaceId), "api-keys", agentId] as const,
   },
 
   knowledge: {

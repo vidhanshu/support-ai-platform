@@ -9,5 +9,6 @@ import { BillingModule } from "../billing/billing.module";
   imports: [KnowledgeModule, AiModule, BillingModule],
   controllers: [ChatController],
   providers: [ChatService],
+  exports: [ChatService],
 })
 export class ChatModule {}

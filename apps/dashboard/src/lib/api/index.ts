@@ -40,4 +40,10 @@ export type {
 } from "./conversations";
 export { billingApi } from "./billing";
 export type { CheckoutPlan } from "./billing";
+export { agentApiKeysApi } from "./api-keys";
+export type {
+  AgentApiKey,
+  CreatedAgentApiKey,
+  CreateAgentApiKeyInput,
+} from "./api-keys";
 export type * from "./types";
