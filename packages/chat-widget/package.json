@@ -1,33 +1,65 @@
 {
-  "name": "@repo/chat-widget",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@support-ai/widget",
+  "version": "0.1.0",
+  "description": "Embeddable Support AI chat widget (script tag / CDN)",
+  "license": "MIT",
+  "author": "Support AI Platform",
   "type": "module",
   "main": "./dist/widget.js",
   "module": "./dist/widget.mjs",
   "types": "./dist/index.d.ts",
+  "unpkg": "./dist/widget.js",
+  "jsdelivr": "./dist/widget.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/widget.mjs",
       "default": "./dist/widget.js"
-    }
+    },
+    "./widget.js": "./dist/widget.js"
   },
   "files": [
-    "dist"
+    "dist/widget.js",
+    "dist/widget.js.map",
+    "dist/widget.mjs",
+    "dist/widget.mjs.map",
+    "dist/index.d.ts",
+    "dist/index.d.ts.map",
+    "dist/types.d.ts",
+    "dist/types.d.ts.map",
+    "LICENSE",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vidhanshu/support-ai-platform.git",
+    "directory": "packages/chat-widget"
+  },
+  "homepage": "https://github.com/vidhanshu/support-ai-platform/tree/main/packages/chat-widget",
+  "bugs": {
+    "url": "https://github.com/vidhanshu/support-ai-platform/issues"
+  },
+  "keywords": [
+    "support-ai",
+    "chat-widget",
+    "embed",
+    "customer-support"
   ],
   "scripts": {
     "build": "vite build && tsc -p tsconfig.build.json && node ./scripts/copy-to-dashboard.mjs",
     "dev": "vite build --watch",
     "preview": "vite preview --open /",
     "demo": "pnpm build && vite preview --open /",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "prepublishOnly": "pnpm build"
   },
-  "dependencies": {
-    "@repo/chat-core": "workspace:*",
-    "marked": "^18.0.9"
+  "publishConfig": {
+    "access": "public"
   },
+  "dependencies": {},
   "devDependencies": {
+    "@support-ai/chat-core": "workspace:*",
+    "marked": "^18.0.9",
     "@repo/eslint-config": "workspace:*",
     "@repo/tsconfig": "workspace:*",
     "eslint": "^9.28.0",

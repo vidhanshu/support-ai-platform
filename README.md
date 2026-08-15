@@ -75,8 +75,8 @@ pnpm dev
 apps/api          NestJS HTTP API (Docker)
 apps/worker       NestJS background worker (Docker)
 apps/dashboard    Next.js dashboard (Vercel / local)
-packages/chat-*   Public chat client + embeddable widget
-packages/sdk      npm-style SDK (+ React)
+packages/chat-*   @support-ai/* public chat client + widget
+packages/sdk      @support-ai/sdk (+ React)
 packages/*        Shared libraries (built into api/worker images)
 ```
 
@@ -120,27 +120,46 @@ SSE events: `status`, `retrieval`, `meta`, `token`, `done`, `error` (JSON in `da
 
 Monthly chat quotas still come from the workspace plan (FREE / HOBBY / PRO).
 
-## Chat widget & SDK
+## Chat widget & SDK (npm)
 
-Shared packages talk only to the **Public Chat API** (agent API key + allowed origins).
+Public packages (scope `@support-ai`):
 
 | Package | Role |
 |---|---|
-| `@repo/chat-core` | Framework-agnostic client (`createClient`, SSE parsing) |
-| `@repo/chat-widget` | CDN / script embed (`SupportAI.init`, Shadow DOM bubble) |
-| `@repo/sdk` | npm-style entry; React via `@repo/sdk/react` |
+| `@support-ai/chat-core` | Framework-agnostic client (`createClient`, SSE) |
+| `@support-ai/widget` | CDN / script embed (`SupportAI.init`) |
+| `@support-ai/sdk` | App SDK; React via `@support-ai/sdk/react` |
+
+### Publish (maintainers)
+
+1. Create the npm org/user that owns `@support-ai` (or change the scope in each package).
+2. `npm login`
+3. From the repo root:
+
+```bash
+pnpm publish:packages
+```
+
+That builds and publishes in order: `chat-core` → `sdk` → `widget`.  
+`workspace:*` deps are rewritten to real versions by pnpm on publish.
+
+Dry-run first:
+
+```bash
+pnpm --filter @support-ai/chat-core --filter @support-ai/sdk --filter @support-ai/widget exec npm pack --dry-run
+```
 
 ### Widget (any website)
 
 ```bash
-pnpm --filter @repo/chat-widget build
+pnpm --filter @support-ai/widget build
 # → packages/chat-widget/dist/widget.js
 # → apps/dashboard/public/embed/widget.js
 ```
 
 ```html
 <script
-  src="https://YOUR_DASHBOARD/embed/widget.js"
+  src="https://cdn.jsdelivr.net/npm/@support-ai/widget@0.1.0/dist/widget.js"
   data-agent-id="AGENT_UUID"
   data-api-key="sak_live_…"
   data-api-url="https://YOUR_API/v1"
@@ -148,29 +167,20 @@ pnpm --filter @repo/chat-widget build
 ></script>
 ```
 
-Or:
-
-```html
-<script src="https://YOUR_DASHBOARD/embed/widget.js"></script>
-<script>
-  SupportAI.init({
-    agentId: "…",
-    apiKey: "sak_live_…",
-    apiUrl: "https://YOUR_API/v1",
-  });
-</script>
-```
-
 Copy-ready snippets live under **Build → Widgets** in the dashboard.
 
 ### React SDK (in-app)
 
+```bash
+npm install @support-ai/sdk
+```
+
 ```tsx
-import { SupportAIProvider, ChatPanel } from "@repo/sdk/react";
+import { SupportAIProvider, ChatPanel } from "@support-ai/sdk/react";
 
 <SupportAIProvider agentId="…" apiKey="…" apiUrl="https://YOUR_API/v1">
   <ChatPanel />
 </SupportAIProvider>
 ```
 
-`useChat()` is available for a fully custom UI. Core-only (no React): `import { createClient } from "@repo/sdk"`.
+`useChat()` is available for a fully custom UI. Core-only (no React): `import { createClient } from "@support-ai/sdk"`.

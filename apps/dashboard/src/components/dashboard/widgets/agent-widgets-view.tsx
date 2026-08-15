@@ -49,7 +49,7 @@ export function AgentWidgetsView({ agentId }: AgentWidgetsViewProps) {
   );
 
   const sdkSnippet = useMemo(
-    () => `import { SupportAIProvider, ChatPanel } from "@repo/sdk/react";
+    () => `import { SupportAIProvider, ChatPanel } from "@support-ai/sdk/react";
 
 export function Help() {
   return (
@@ -63,6 +63,17 @@ export function Help() {
   );
 }`,
     [agentId],
+  );
+
+  const cdnSnippet = useMemo(
+    () => `<script
+  src="https://cdn.jsdelivr.net/npm/@support-ai/widget@0.1.0/dist/widget.js"
+  data-agent-id="${agentId}"
+  data-api-key="${apiKeyPlaceholder}"
+  data-api-url="${API_BASE_URL}"
+  async
+></script>`,
+    [agentId, apiKeyPlaceholder],
   );
 
   return (
@@ -93,7 +104,7 @@ export function Help() {
 
       <SnippetBlock
         title="1. Script tag (auto-init)"
-        description="Paste before </body> on your marketing site. The widget loads from this dashboard’s /embed/widget.js in local/dev; point src at your CDN in production."
+        description="Paste before </body> on your marketing site. Local/dev uses this dashboard’s /embed/widget.js; after npm publish prefer the jsDelivr snippet below."
         code={scriptSnippet}
         onCopy={() => void copyText("Script snippet", scriptSnippet)}
       />
@@ -106,8 +117,15 @@ export function Help() {
       />
 
       <SnippetBlock
-        title="3. React SDK"
-        description="In this monorepo: workspace package @repo/sdk. Publish later as your public npm name. Uses SupportAIProvider + ChatPanel (or useChat for a custom UI)."
+        title="3. CDN (npm @support-ai/widget)"
+        description="After publishing, sites can load the widget from jsDelivr without hosting the file yourself."
+        code={cdnSnippet}
+        onCopy={() => void copyText("CDN snippet", cdnSnippet)}
+      />
+
+      <SnippetBlock
+        title="4. React SDK"
+        description="npm install @support-ai/sdk — SupportAIProvider + ChatPanel (or useChat for a custom UI)."
         code={sdkSnippet}
         onCopy={() => void copyText("SDK snippet", sdkSnippet)}
       />
@@ -115,7 +133,7 @@ export function Help() {
       <section className="rounded-xl border border-dashed bg-muted/30 p-5 text-sm text-muted-foreground">
         <p className="font-medium text-foreground">Local widget build</p>
         <p className="mt-1">
-          <code className="text-xs">pnpm --filter @repo/chat-widget build</code>{" "}
+          <code className="text-xs">pnpm --filter @support-ai/widget build</code>{" "}
           writes <code className="text-xs">widget.js</code> and copies it to{" "}
           <code className="text-xs">apps/dashboard/public/embed/widget.js</code>.
         </p>

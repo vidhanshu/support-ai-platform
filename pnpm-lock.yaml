@@ -392,13 +392,6 @@ importers:
         version: 5.9.3
 
   packages/chat-widget:
-    dependencies:
-      '@repo/chat-core':
-        specifier: workspace:*
-        version: link:../chat-core
-      marked:
-        specifier: ^18.0.9
-        version: 18.0.9
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -406,9 +399,15 @@ importers:
       '@repo/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
+      '@support-ai/chat-core':
+        specifier: workspace:*
+        version: link:../chat-core
       eslint:
         specifier: ^9.28.0
         version: 9.39.5(jiti@2.7.0)
+      marked:
+        specifier: ^18.0.9
+        version: 18.0.9
       typescript:
         specifier: ^5.8.3
         version: 5.9.3
@@ -641,7 +640,7 @@ importers:
 
   packages/sdk:
     dependencies:
-      '@repo/chat-core':
+      '@support-ai/chat-core':
         specifier: workspace:*
         version: link:../chat-core
       react-markdown:

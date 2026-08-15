@@ -1,6 +1,6 @@
 /**
  * Framework-agnostic Support AI client.
- * For React hooks / UI: `@repo/sdk/react`
+ * For React hooks / UI: `@support-ai/sdk/react`
  */
 export {
   createClient,
@@ -12,4 +12,4 @@ export {
   type ChatSource,
   type ChatStreamEvent,
   type StreamChatInput,
-} from "@repo/chat-core";
+} from "@support-ai/chat-core";

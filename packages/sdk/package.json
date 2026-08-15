@@ -1,7 +1,9 @@
 {
-  "name": "@repo/sdk",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@support-ai/sdk",
+  "version": "0.1.0",
+  "description": "Support AI SDK — public chat client + React hooks and ChatPanel",
+  "license": "MIT",
+  "author": "Support AI Platform",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -18,15 +20,38 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vidhanshu/support-ai-platform.git",
+    "directory": "packages/sdk"
+  },
+  "homepage": "https://github.com/vidhanshu/support-ai-platform/tree/main/packages/sdk",
+  "bugs": {
+    "url": "https://github.com/vidhanshu/support-ai-platform/issues"
+  },
+  "keywords": [
+    "support-ai",
+    "chat",
+    "react",
+    "customer-support",
+    "sdk"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "prepublishOnly": "pnpm build"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "dependencies": {
-    "@repo/chat-core": "workspace:*",
+    "@support-ai/chat-core": "workspace:*",
     "react-markdown": "^10.1.0",
     "remark-gfm": "^4.0.1"
   },

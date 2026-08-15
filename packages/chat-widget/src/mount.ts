@@ -1,5 +1,5 @@
-import { createClient, SupportAIError } from "@repo/chat-core";
-import type { SupportAIClient } from "@repo/chat-core";
+import { createClient, SupportAIError } from "@support-ai/chat-core";
+import type { SupportAIClient } from "@support-ai/chat-core";
 import { renderMarkdown } from "./markdown";
 import { WIDGET_STYLES } from "./styles";
 import type { SupportAIWidgetConfig, SupportAIWidgetHandle } from "./types";

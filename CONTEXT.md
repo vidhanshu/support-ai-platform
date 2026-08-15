@@ -25,14 +25,14 @@ packages/
   config       Root env path helpers + env key constants
   utils        Shared pure utilities
   ui           Shared React UI (shadcn-style)
-  chat-core    Public chat HTTP + SSE client
-  chat-widget  Embeddable Shadow DOM widget (`SupportAI.init` / CDN)
-  sdk          npm-style SDK (`@repo/sdk`, React via `@repo/sdk/react`)
+  chat-core    Public chat HTTP + SSE client (`@support-ai/chat-core`)
+  chat-widget  Embeddable widget (`@support-ai/widget`)
+  sdk          npm SDK (`@support-ai/sdk`, React via `@support-ai/sdk/react`)
   tsconfig     Shared TypeScript configs
   eslint-config Shared ESLint configs
 ```
 
-Widget ships as `packages/chat-widget` (not `apps/widget`). Built asset is copied to `apps/dashboard/public/embed/widget.js`.
+Widget ships as `packages/chat-widget` (npm name `@support-ai/widget`). Built asset is copied to `apps/dashboard/public/embed/widget.js`.
 
 ## Services
 
@@ -101,7 +101,7 @@ Deployment target: AWS EC2 with Docker Compose.
 | AI | Local models via Ollama; provider-swappable abstraction; no paid LLM APIs |
 | Jobs | BullMQ on Redis inside `worker` |
 | Payments | Stripe subscriptions (monthly/annual), webhooks, upgrades/downgrades, cancellation, failed payments |
-| Widget / SDK | `@repo/chat-widget` + `@repo/sdk` on Public Chat API |
+| Widget / SDK | `@support-ai/widget` + `@support-ai/sdk` on Public Chat API |
 
 ## Principles
 

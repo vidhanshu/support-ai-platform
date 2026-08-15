@@ -13,4 +13,4 @@ export {
   type PublicAgent,
   type ChatSource,
   type ChatStreamEvent,
-} from "@repo/chat-core";
+} from "@support-ai/chat-core";

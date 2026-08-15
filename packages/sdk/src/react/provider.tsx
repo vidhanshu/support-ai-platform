@@ -11,7 +11,7 @@ import {
   createClient,
   type SupportAIClient,
   type SupportAIClientConfig,
-} from "@repo/chat-core";
+} from "@support-ai/chat-core";
 
 const SupportAIContext = createContext<SupportAIClient | null>(null);
 

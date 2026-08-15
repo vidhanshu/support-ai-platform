@@ -9,7 +9,9 @@
     "postinstall": "pnpm db:generate",
     "db:generate": "pnpm --filter @repo/database db:generate",
     "db:migrate": "pnpm --filter @repo/database db:migrate",
-    "db:studio": "pnpm --filter @repo/database db:studio"
+    "db:studio": "pnpm --filter @repo/database db:studio",
+    "build:packages": "pnpm --filter @support-ai/chat-core --filter @support-ai/sdk --filter @support-ai/widget build",
+    "publish:packages": "pnpm --filter @support-ai/chat-core publish --access public && pnpm --filter @support-ai/sdk publish --access public && pnpm --filter @support-ai/widget publish --access public"
   },
   "devDependencies": {
     "turbo": "^2.5.4",

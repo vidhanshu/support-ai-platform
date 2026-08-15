@@ -5,7 +5,7 @@ import {
   SupportAIError,
   type ChatSource,
   type PublicAgent,
-} from "@repo/chat-core";
+} from "@support-ai/chat-core";
 import { useSupportAIClient } from "./provider";
 
 export type ChatMessage = {
