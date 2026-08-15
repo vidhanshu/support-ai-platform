@@ -75,6 +75,8 @@ pnpm dev
 apps/api          NestJS HTTP API (Docker)
 apps/worker       NestJS background worker (Docker)
 apps/dashboard    Next.js dashboard (Vercel / local)
+packages/chat-*   Public chat client + embeddable widget
+packages/sdk      npm-style SDK (+ React)
 packages/*        Shared libraries (built into api/worker images)
 ```
 
@@ -117,3 +119,58 @@ SSE events: `status`, `retrieval`, `meta`, `token`, `done`, `error` (JSON in `da
 | `400` | Plan chat quota / no ready knowledge sources / inactive agent |
 
 Monthly chat quotas still come from the workspace plan (FREE / HOBBY / PRO).
+
+## Chat widget & SDK
+
+Shared packages talk only to the **Public Chat API** (agent API key + allowed origins).
+
+| Package | Role |
+|---|---|
+| `@repo/chat-core` | Framework-agnostic client (`createClient`, SSE parsing) |
+| `@repo/chat-widget` | CDN / script embed (`SupportAI.init`, Shadow DOM bubble) |
+| `@repo/sdk` | npm-style entry; React via `@repo/sdk/react` |
+
+### Widget (any website)
+
+```bash
+pnpm --filter @repo/chat-widget build
+# → packages/chat-widget/dist/widget.js
+# → apps/dashboard/public/embed/widget.js
+```
+
+```html
+<script
+  src="https://YOUR_DASHBOARD/embed/widget.js"
+  data-agent-id="AGENT_UUID"
+  data-api-key="sak_live_…"
+  data-api-url="https://YOUR_API/v1"
+  async
+></script>
+```
+
+Or:
+
+```html
+<script src="https://YOUR_DASHBOARD/embed/widget.js"></script>
+<script>
+  SupportAI.init({
+    agentId: "…",
+    apiKey: "sak_live_…",
+    apiUrl: "https://YOUR_API/v1",
+  });
+</script>
+```
+
+Copy-ready snippets live under **Build → Widgets** in the dashboard.
+
+### React SDK (in-app)
+
+```tsx
+import { SupportAIProvider, ChatPanel } from "@repo/sdk/react";
+
+<SupportAIProvider agentId="…" apiKey="…" apiUrl="https://YOUR_API/v1">
+  <ChatPanel />
+</SupportAIProvider>
+```
+
+`useChat()` is available for a fully custom UI. Core-only (no React): `import { createClient } from "@repo/sdk"`.

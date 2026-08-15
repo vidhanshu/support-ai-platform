@@ -1,0 +1,37 @@
+{
+  "name": "@repo/chat-widget",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/widget.js",
+  "module": "./dist/widget.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/widget.mjs",
+      "default": "./dist/widget.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.build.json && node ./scripts/copy-to-dashboard.mjs",
+    "dev": "vite build --watch",
+    "preview": "vite preview --open /",
+    "demo": "pnpm build && vite preview --open /",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@repo/chat-core": "workspace:*",
+    "marked": "^18.0.9"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/tsconfig": "workspace:*",
+    "eslint": "^9.28.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  }
+}

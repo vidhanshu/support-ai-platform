@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Support AI Widget Demo</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Georgia, "Times New Roman", serif;
+        background:
+          radial-gradient(circle at top left, #ecfeff, transparent 40%),
+          linear-gradient(160deg, #f8fafc, #e2e8f0);
+        color: #0f172a;
+      }
+      main {
+        max-width: 40rem;
+        padding: 4rem 1.5rem;
+      }
+      h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+      p { line-height: 1.6; color: #334155; }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.9em;
+        background: #fff;
+        padding: 0.1em 0.35em;
+        border-radius: 4px;
+      }
+      .hint {
+        margin-top: 1.5rem;
+        padding: 1rem 1.15rem;
+        border-radius: 12px;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        font-size: 0.95rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Widget demo page</h1>
+      <p>
+        The floating bubble (bottom-right) is the embed. Click it to chat.
+      </p>
+      <div class="hint">
+        Edit <code>agentId</code> / <code>apiKey</code> in this file, then rebuild.
+        Add <code>http://localhost:4173</code> to the key’s
+        <code>allowedOrigins</code> in the dashboard.
+      </div>
+    </main>
+    <!-- Served next to this file as ./widget.js after `pnpm build` + `pnpm preview` -->
+    <script src="./widget.js"></script>
+    <script>
+      SupportAI.init({
+        agentId: "d5d0d511-34de-4f5e-b024-4a4f8baf8b5c",
+        apiKey: "sak_test_TSRnEmng3ERLZmBja1EgdT5Kj79_3os0",
+        apiUrl: "http://localhost:3001/v1",
+        greeting: "Ask me anything — this is the embeddable widget.",
+      });
+    </script>
+  </body>
+</html>

@@ -1,5 +1,13 @@
-import { PlaceholderPage } from "@/components/common/placeholder-page";
+"use client";
 
-export default function Page() {
-  return <PlaceholderPage title="Build — Widgets" />;
+import { use } from "react";
+import { AgentWidgetsView } from "@/components/dashboard/widgets/agent-widgets-view";
+
+export default function Page({
+  params,
+}: {
+  params: Promise<{ agentId: string }>;
+}) {
+  const { agentId } = use(params);
+  return <AgentWidgetsView agentId={agentId} />;
 }
