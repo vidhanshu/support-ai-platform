@@ -1,12 +1,15 @@
 export type WidgetPosition = "bottom-right" | "bottom-left";
+export type WidgetTheme = "light" | "dark";
 
 export type SupportAIWidgetConfig = {
   agentId: string;
   apiKey: string;
   /** API base including `/v1`. */
   apiUrl: string;
-  /** Launcher / header accent. */
+  /** Launcher / header accent. Default black. */
   primaryColor?: string;
+  /** `light` (default) or `dark`. */
+  theme?: WidgetTheme;
   /** Panel header title override (defaults to agent name). */
   title?: string;
   /** Shown before the first message. */

@@ -159,7 +159,7 @@ pnpm --filter @support-ai/widget build
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/@support-ai/widget@0.1.0/dist/widget.js"
+  src="https://cdn.jsdelivr.net/npm/@support-ai/widget@0.2.0/dist/widget.js"
   data-agent-id="AGENT_UUID"
   data-api-key="sak_live_…"
   data-api-url="https://YOUR_API/v1"

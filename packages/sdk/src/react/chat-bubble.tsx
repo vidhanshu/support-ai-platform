@@ -28,6 +28,7 @@ export type ChatBubbleProps = Omit<ChatPanelProps, "onClose" | "style" | "classN
 export function ChatBubble({
   position = "bottom-right",
   primaryColor = "#111111",
+  theme = "light",
   defaultOpen = false,
   open: openControlled,
   onOpenChange,
@@ -77,6 +78,7 @@ export function ChatBubble({
         >
           <ChatPanel
             {...panelProps}
+            theme={theme}
             primaryColor={primaryColor}
             className={panelClassName}
             onClose={() => setOpen(false)}

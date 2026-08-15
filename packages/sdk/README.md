@@ -28,7 +28,7 @@ const client = createClient({
 
 ## React — floating chat bubble (recommended)
 
-Same UX as the website widget: launcher button + panel.
+Same UX as the website widget: launcher button + panel, conversation history, light/dark theme.
 
 ```tsx
 import { SupportAIProvider, ChatBubble } from "@support-ai/sdk/react";
@@ -40,13 +40,16 @@ export function SupportWidget() {
       apiKey={process.env.NEXT_PUBLIC_SUPPORT_AI_KEY!}
       apiUrl="https://YOUR_API/v1"
     >
-      <ChatBubble position="bottom-right" />
+      <ChatBubble position="bottom-right" theme="dark" />
     </SupportAIProvider>
   );
 }
 ```
 
-Put `<SupportWidget />` once in your root layout (e.g. Next.js `app/layout.tsx`) so it floats on every page.
+- `theme="light" | "dark"` (default `light`)
+- **Chats** opens your local conversation list; **New** starts a fresh thread
+- Conversations (title + messages) persist in `localStorage` and `conversationId` is sent to the API so the server continues the same thread
+
 
 ## React — inline panel
 

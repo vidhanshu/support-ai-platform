@@ -5,6 +5,17 @@ export {
   extractErrorMessage,
 } from "./errors";
 export { parseSseChunk } from "./sse";
+export {
+  loadConversationStore,
+  saveConversationStore,
+  conversationStoreKey,
+  titleFromMessage,
+  upsertConversation,
+  getActiveConversation,
+  type ConversationStore,
+  type StoredConversation,
+  type StoredChatMessage,
+} from "./conversations";
 export type {
   ChatSource,
   ChatStreamEvent,

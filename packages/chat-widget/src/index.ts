@@ -1,7 +1,7 @@
 import { mountWidget } from "./mount";
 import type { SupportAIWidgetConfig, SupportAIWidgetHandle } from "./types";
 
-export type { SupportAIWidgetConfig, SupportAIWidgetHandle, WidgetPosition } from "./types";
+export type { SupportAIWidgetConfig, SupportAIWidgetHandle, WidgetPosition, WidgetTheme } from "./types";
 
 let active: SupportAIWidgetHandle | null = null;
 
@@ -21,6 +21,10 @@ function readScriptDataset(): Partial<SupportAIWidgetConfig> {
     primaryColor: dataset.primaryColor,
     title: dataset.title,
     greeting: dataset.greeting,
+    theme:
+      dataset.theme === "dark" || dataset.theme === "light"
+        ? dataset.theme
+        : undefined,
     position:
       dataset.position === "bottom-left" || dataset.position === "bottom-right"
         ? dataset.position

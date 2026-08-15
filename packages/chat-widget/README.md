@@ -6,7 +6,7 @@ Floating chat bubble you can drop on any website. Talks to the Support AI **publ
 
 ```html
 <script
-  src="https://cdn.jsdelivr.net/npm/@support-ai/widget@0.1.0/dist/widget.js"
+  src="https://cdn.jsdelivr.net/npm/@support-ai/widget@0.2.0/dist/widget.js"
   data-agent-id="YOUR_AGENT_ID"
   data-api-key="sak_live_…"
   data-api-url="https://YOUR_API/v1"
@@ -17,12 +17,13 @@ Floating chat bubble you can drop on any website. Talks to the Support AI **publ
 Or init manually:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@support-ai/widget@0.1.0/dist/widget.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@support-ai/widget@0.2.0/dist/widget.js"></script>
 <script>
   SupportAI.init({
     agentId: "YOUR_AGENT_ID",
     apiKey: "sak_live_…",
     apiUrl: "https://YOUR_API/v1",
+    theme: "dark",
   });
 </script>
 ```
@@ -42,10 +43,14 @@ Then serve `node_modules/@support-ai/widget/dist/widget.js` from your app/CDN, o
 | `agentId` | Agent UUID |
 | `apiKey` | Public agent key (`sak_…`) |
 | `apiUrl` | API base including `/v1` |
+| `theme` | `light` (default) \| `dark` |
 | `primaryColor` | Accent (default black `#111111`) |
 | `title` | Optional header override (agent name used by default) |
 | `greeting` | First system line |
 | `position` | `bottom-right` \| `bottom-left` |
+
+Conversations are stored in the browser (`localStorage`). Use **Chats** in the header to switch threads; the API receives `conversationId` so the agent continues server-side context.
+
 
 Add your page origin to the key’s `allowedOrigins` in the dashboard.
 

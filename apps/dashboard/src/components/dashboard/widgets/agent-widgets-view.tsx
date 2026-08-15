@@ -58,7 +58,7 @@ export function SupportWidget() {
       apiKey={process.env.NEXT_PUBLIC_SUPPORT_AI_KEY!}
       apiUrl="${API_BASE_URL}"
     >
-      <ChatBubble position="bottom-right" />
+      <ChatBubble position="bottom-right" theme="dark" />
     </SupportAIProvider>
   );
 }
@@ -69,7 +69,7 @@ export function SupportWidget() {
 
   const cdnSnippet = useMemo(
     () => `<script
-  src="https://cdn.jsdelivr.net/npm/@support-ai/widget@0.1.0/dist/widget.js"
+  src="https://cdn.jsdelivr.net/npm/@support-ai/widget@0.2.0/dist/widget.js"
   data-agent-id="${agentId}"
   data-api-key="${apiKeyPlaceholder}"
   data-api-url="${API_BASE_URL}"

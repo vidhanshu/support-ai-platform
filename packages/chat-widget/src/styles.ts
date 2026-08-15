@@ -14,7 +14,10 @@ export const WIDGET_STYLES = /* css */ `
   --sai-text: #111111;
   --sai-muted: #737373;
   --sai-user: #111111;
+  --sai-assistant: #ffffff;
+  --sai-input: #ffffff;
   --sai-on-primary: #ffffff;
+  --sai-danger: #b91c1c;
   --sai-shadow: 0 18px 50px rgba(0, 0, 0, 0.16);
   position: fixed;
   z-index: 2147483000;
@@ -23,6 +26,18 @@ export const WIDGET_STYLES = /* css */ `
   flex-direction: column;
   align-items: flex-end;
   gap: 12px;
+}
+
+.sai-root[data-theme="dark"] {
+  --sai-bg: #141414;
+  --sai-surface: #1c1c1c;
+  --sai-border: #2e2e2e;
+  --sai-text: #f4f4f5;
+  --sai-muted: #a1a1aa;
+  --sai-assistant: #242424;
+  --sai-input: #111111;
+  --sai-danger: #f87171;
+  --sai-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
 }
 
 .sai-root[data-position="bottom-left"] {
@@ -35,6 +50,7 @@ export const WIDGET_STYLES = /* css */ `
 }
 
 .sai-panel {
+  position: relative;
   width: min(380px, calc(100vw - 32px));
   height: min(560px, calc(100vh - 100px));
   background: var(--sai-bg);
@@ -58,7 +74,6 @@ export const WIDGET_STYLES = /* css */ `
   gap: 12px;
   padding: 14px 16px;
   background: var(--sai-primary);
-  /* Hardcoded so panel’s dark text can’t win if a CSS variable fails */
   color: #ffffff;
 }
 
@@ -76,19 +91,27 @@ export const WIDGET_STYLES = /* css */ `
   color: rgba(255, 255, 255, 0.85);
 }
 
-.sai-header-sub[hidden] {
-  display: none;
+.sai-header-sub[hidden] { display: none; }
+
+.sai-header-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.sai-icon-btn, .sai-text-btn {
+  appearance: none;
+  border: 0;
+  background: rgba(255,255,255,0.15);
+  color: #ffffff;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
 }
 
 .sai-icon-btn {
-  appearance: none;
-  border: 0;
-  background: rgba(255,255,255,0.12);
-  color: #ffffff;
   width: 32px;
   height: 32px;
-  border-radius: 8px;
-  cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -96,7 +119,12 @@ export const WIDGET_STYLES = /* css */ `
   line-height: 1;
 }
 
-.sai-icon-btn:hover { background: rgba(255,255,255,0.22); }
+.sai-text-btn {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.sai-icon-btn:hover, .sai-text-btn:hover { background: rgba(255,255,255,0.22); }
 
 .sai-messages {
   flex: 1;
@@ -127,9 +155,10 @@ export const WIDGET_STYLES = /* css */ `
 
 .sai-bubble[data-role="assistant"] {
   align-self: flex-start;
-  background: #fff;
+  background: var(--sai-assistant);
   border: 1px solid var(--sai-border);
   border-bottom-left-radius: 4px;
+  color: var(--sai-text);
 }
 
 .sai-bubble[data-role="system"] {
@@ -209,7 +238,7 @@ export const WIDGET_STYLES = /* css */ `
   gap: 8px;
   padding: 12px;
   border-top: 1px solid var(--sai-border);
-  background: #fff;
+  background: var(--sai-bg);
 }
 
 .sai-input {
@@ -221,7 +250,7 @@ export const WIDGET_STYLES = /* css */ `
   font: inherit;
   font-size: 14px;
   color: var(--sai-text);
-  background: #fff;
+  background: var(--sai-input);
   min-height: 44px;
   max-height: 120px;
 }
@@ -267,8 +296,101 @@ export const WIDGET_STYLES = /* css */ `
 .sai-launcher svg { width: 26px; height: 26px; fill: currentColor; }
 
 .sai-error {
-  color: #b91c1c;
+  color: var(--sai-danger);
   font-size: 12px;
   padding: 0 16px 8px;
+}
+
+.sai-history {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: var(--sai-bg);
+  display: none;
+  flex-direction: column;
+}
+
+.sai-history[data-open="true"] {
+  display: flex;
+}
+
+.sai-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--sai-border);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.sai-history-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.sai-history-item {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.sai-history-main {
+  flex: 1;
+  text-align: left;
+  appearance: none;
+  border: 1px solid var(--sai-border);
+  background: transparent;
+  color: var(--sai-text);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.sai-history-main[data-active="true"] {
+  border-color: var(--sai-primary);
+  background: var(--sai-surface);
+}
+
+.sai-history-title {
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sai-history-meta {
+  font-size: 11px;
+  color: var(--sai-muted);
+  margin-top: 4px;
+}
+
+.sai-history-new {
+  margin: 12px;
+  appearance: none;
+  border: 0;
+  border-radius: 10px;
+  background: var(--sai-primary);
+  color: #fff;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sai-ghost-btn {
+  appearance: none;
+  border: 1px solid var(--sai-border);
+  background: var(--sai-surface);
+  color: var(--sai-text);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
 }
 `;
