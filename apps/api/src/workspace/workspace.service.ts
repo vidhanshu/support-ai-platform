@@ -9,6 +9,7 @@ import { JwtUser } from "../auth/interfaces/jwt.interface";
 import {
   Prisma,
   PrismaService,
+  Subscription,
   SubscriptionPlan,
   SubscriptionStatus,
   Workspace,
@@ -25,11 +26,14 @@ export class WorkspaceService {
   async checkWorkspaceExistenceAndOwnership(
     user: JwtUser,
     id: string,
-  ): Promise<Workspace> {
+  ): Promise<Workspace & { subscription: Subscription | null }> {
     const workspace = await this.prismaService.workspace.findFirst({
       where: {
         id,
         members: { some: { userId: user.id, role: WorkspaceRole.OWNER } },
+      },
+      include: {
+        subscription: true,
       },
     });
     if (!workspace) throw new NotFoundException("Workspace not found");
@@ -142,7 +146,17 @@ export class WorkspaceService {
   }
 
   async deleteById(user: JwtUser, id: string) {
-    await this.checkWorkspaceExistenceAndOwnership(user, id);
+    const wp = await this.checkWorkspaceExistenceAndOwnership(user, id);
+    const sub = wp.subscription;
+    const isPaid =
+      !!sub?.stripeSubscriptionId ||
+      (sub?.plan != null && sub.plan !== SubscriptionPlan.FREE);
+
+    if (isPaid) {
+      throw new BadRequestException(
+        "Cancel or downgrade to the Free plan before deleting this workspace.",
+      );
+    }
     await this.prismaService.workspace.delete({ where: { id } });
   }
 

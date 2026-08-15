@@ -45,6 +45,8 @@ export function ConfirmDialog({
     setInternalLoading(true);
     try {
       await onConfirm();
+    } catch {
+      // Keep dialog open for retry/cancel; callers should toast if needed.
     } finally {
       setInternalLoading(false);
     }

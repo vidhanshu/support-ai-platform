@@ -93,7 +93,14 @@ export function GeneralSettingsView() {
       confirmLabel: "Delete",
       loadingLabel: "Deleting…",
       variant: "destructive",
-      action: () => deleteWorkspace.mutateAsync(workspaceId),
+      action: async () => {
+        try {
+          await deleteWorkspace.mutateAsync(workspaceId);
+        } catch (error) {
+          toastApiError(error, "Failed to delete workspace");
+          throw error;
+        }
+      },
     });
 
     if (!confirmed) return;
